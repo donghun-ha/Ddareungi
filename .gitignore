@@ -341,4 +341,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/python,dart,flutter,macos,windows,visualstudiocode
-Data/송파구_대여이력2305~2405.csv
+
+# CSV files
+*.csv
