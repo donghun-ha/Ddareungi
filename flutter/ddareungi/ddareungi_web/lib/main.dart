@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         ],
       ),
       // **********************
-      title: 'Flutter : Responsive Framework',
+      title: '따릉이',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
