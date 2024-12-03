@@ -344,3 +344,4 @@ $RECYCLE.BIN/
 
 # CSV files
 *.csv
+flutter/ddareungi/ddareungi_web/lib/services/private.dart
