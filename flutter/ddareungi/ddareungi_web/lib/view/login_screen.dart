@@ -1,5 +1,7 @@
 import 'package:ddareungi_web/model/responsive_config.dart';
+import 'package:ddareungi_web/view/bike_test.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -73,7 +75,8 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: () {
-                      // 로그인 로직
+                      Get.to(() => const BikeTest(),
+                          transition: Transition.noTransition);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colorScheme.primary,

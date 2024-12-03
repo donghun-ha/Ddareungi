@@ -2,8 +2,8 @@ import 'package:ddareungi_web/vm/bike_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class Test extends StatelessWidget {
-  const Test({super.key});
+class BikeTest extends StatelessWidget {
+  const BikeTest({super.key});
 
   @override
   Widget build(BuildContext context) {
