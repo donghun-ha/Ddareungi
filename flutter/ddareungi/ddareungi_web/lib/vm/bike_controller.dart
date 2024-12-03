@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import '../services/bike_service.dart';
+import '../service/bike_service.dart';
 
 class BikeController extends GetxController {
   final BikeService _bikeService = BikeService();
