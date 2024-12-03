@@ -1,5 +1,5 @@
 import 'package:ddareungi_web/model/responsive_config.dart';
-import 'package:ddareungi_web/view/bike_test.dart';
+import 'package:ddareungi_web/view/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -36,16 +36,22 @@ class LoginScreen extends StatelessWidget {
                     size: 120,
                     color: colorScheme.primary,
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(
+                    height: 48,
+                  ),
                   TextFormField(
                     controller: emailController,
                     decoration: InputDecoration(
                       labelText: '아이디',
                       border: const OutlineInputBorder(),
-                      prefixIcon:
-                          Icon(Icons.email, color: colorScheme.secondary),
-                      labelStyle:
-                          TextStyle(color: colorScheme.onSurface, fontSize: 18),
+                      prefixIcon: Icon(
+                        Icons.email,
+                        color: colorScheme.secondary,
+                      ),
+                      labelStyle: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 18,
+                      ),
                       focusedBorder: OutlineInputBorder(
                         borderSide:
                             BorderSide(color: colorScheme.primary, width: 2),
@@ -62,20 +68,26 @@ class LoginScreen extends StatelessWidget {
                       border: const OutlineInputBorder(),
                       prefixIcon:
                           Icon(Icons.lock, color: colorScheme.secondary),
-                      labelStyle:
-                          TextStyle(color: colorScheme.onSurface, fontSize: 18),
+                      labelStyle: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 18,
+                      ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                          color: colorScheme.primary,
+                          width: 2,
+                        ),
                       ),
                     ),
-                    style: const TextStyle(fontSize: 18),
+                    style: const TextStyle(
+                      fontSize: 18,
+                    ),
                     obscureText: true,
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: () {
-                      Get.to(() => const BikeTest(),
+                      Get.to(() => const HomeScreen(),
                           transition: Transition.noTransition);
                     },
                     style: ElevatedButton.styleFrom(
@@ -88,7 +100,9 @@ class LoginScreen extends StatelessWidget {
                     ),
                     child: const Text(
                       '로그인',
-                      style: TextStyle(fontSize: 20),
+                      style: TextStyle(
+                        fontSize: 20,
+                      ),
                     ),
                   ),
                 ],
