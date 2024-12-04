@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       // **********************
       title: '따릉이',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.grey),
         useMaterial3: true,
       ),
       home: LoginScreen(),
