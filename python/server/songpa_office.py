@@ -43,7 +43,7 @@ router = APIRouter()
 # 날씨 불러오는 함수
 def get_population(name : str):
     key = hosts.js_key
-    url=f'http://openapi.seoul.go.kr:8088/{key}/json/citydata/1/5/{name}'
+    url = f"http://openapi.seoul.go.kr:8088/{key}/json/citydata/1/5/{name}"
     response = requests.get(url)
     try :
         data=response.json()
@@ -60,9 +60,9 @@ def get_population(name : str):
 # 오존 불러오는 함수
 def get_air():
     key = hosts.js_key
-    url = f'http://openapi.seoul.go.kr:8088/{key}/json/ListAvgOfSeoulAirQualityService/1/5/'
+    url = f"http://openapi.seoul.go.kr:8088/{key}/json/ListAvgOfSeoulAirQualityService/1/5/"
     response = requests.get(url)
-    try :
+    try:
         data = response.json()
         ozone = data['ListAvgOfSeoulAirQualityService']['row'][0]['OZONE']
         # print(f'O3 : {ozone}') # 영어 O
