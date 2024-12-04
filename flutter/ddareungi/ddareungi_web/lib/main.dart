@@ -1,5 +1,6 @@
 import 'package:ddareungi_web/model/responsive_config.dart';
 import 'package:ddareungi_web/view/login_screen.dart';
+// import 'package:ddareungi_web/view/rebalance_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -20,9 +21,9 @@ class MyApp extends StatelessWidget {
         breakpoints: ResponsiveConfig.breakpoints,
       ),
       // **********************
-      title: '따릉이',
+      title: '따릉고',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.grey),
         useMaterial3: true,
       ),
       home: LoginScreen(),
