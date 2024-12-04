@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         breakpoints: ResponsiveConfig.breakpoints,
       ),
       // **********************
-      title: '따릉이',
+      title: '따릉고',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
