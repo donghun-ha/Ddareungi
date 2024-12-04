@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 import pymysql
 import hosts
+from  songpa_test import router as test_router
 
 
 app = FastAPI()
 
+
+app.include_router(test_router, prefix="/test", tags=['test'])
 
 def connect():
     conn = pymysql.connect(
