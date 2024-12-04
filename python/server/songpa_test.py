@@ -8,23 +8,33 @@ import h5py
 from datetime import timedelta,datetime
 
 
-def get_weather_population(name : str):
+def get_temp(time : int): # 0 : 1시간후, 1 = 2시간후, 2 = 3시간후
+    try:
+        key = hosts.js_key
+        url=f'http://openapi.seoul.go.kr:8088/{key}/json/citydata/1/5/잠실 관광특구'
+        response = requests.get(url)
+        citydata = response.json()['CITYDATA']['WEATHER_STTS'][0]['FCST24HOURS']
+        temp =citydata[time]['TEMP'] 
+        print(time)
+        print(temp) 
+        return temp
+    except Exception as e:
+        print('get_temp', e)
+
+
+def get_air():
     key = hosts.js_key
-    url=f'http://openapi.seoul.go.kr:8088/{key}/json/citydata/1/5/{name}'
+    url = f'http://openapi.seoul.go.kr:8088/{key}/json/ListAvgOfSeoulAirQualityService/1/5/'
     response = requests.get(url)
-    
-    # try :
-    #     data=response.json()
-    #     area_ppltn_min = data['CITYDATA']['LIVE_PPLTN_STTS'][0]['AREA_PPLTN_MIN']
-    #     area_ppltn_max = data['CITYDATA']['LIVE_PPLTN_STTS'][0]['AREA_PPLTN_MAX']
-    #     time_test = data['CITYDATA']['WEATHER_STTS']
-    #     result = np.mean(area_ppltn_max, area_ppltn_min)
-    #     print(time_test)
-    #     return{'result' : result}
-    # except Exception as e :
-    #     print('Error',e)
+    try :
+        data = response.json()
+        ozone = data['ListAvgOfSeoulAirQualityService']['row'][0]['OZONE']
+        # print(f'O3 : {ozone}') # 영어 O
+        return(ozone)
+    except Exception as e:
+        print("Error ", e)
 
-
-
-
+if __name__ =="__main__":
+    get_temp(1)
+    get_air()
 
