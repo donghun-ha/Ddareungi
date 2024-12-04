@@ -6,6 +6,7 @@ Date :  2024.12.04
 import joblib
 from fastapi import APIRouter
 import numpy as np
+import pandas as pd
 '''Feature
 연, 월, 일 -> 오늘날짜
 시간대 -> 지금 시간 + 유저 입력
@@ -15,7 +16,7 @@ import numpy as np
 
 ==================================================
 연, 월, 일, 시간대, 기온(°C), O3, 총생활인구수,유동인구, 
-휴일여부_평일, 휴일여부_휴일, 계절_봄, 계절_여름, 계절_가을, 계절_겨울
+휴일여부, 계절_0, 계절_1, 계절_2, 계절_3
 
 '''
 
@@ -28,21 +29,27 @@ model = data['model']
 
 
 
-
-
 @router.get('/predict')
 async def test():
     try:
-        input = np.array([2024, 12, 4, 12, 4, 1, 2000, 2000, 1, 0, 0, 0, 0, 1]).reshape(1, -1)
-        feature=scaler.transform(input)
-        print(f'예측값 : {model.predict(feature)}')
-        return {'예측값': model.predict(feature)}
+        # 입력 데이터 준비
+        input_scale = [2000, 2000]  # 총생활인구수, 유동인구 
+        front_data = [2024,12,4,14,3,3]  # 연, 월, 일 , 시간대, 기온, 오존
+        back_data = [1,0,0,0,0,1] # 휴일여부, 계절_0, 계절_1, 계절_2, 계절_3
+        # feature 합치기
+        feature = np.hstack((front_data, input_scale, back_data))
+        # 스케일링 적용
+        scaled_data = scaler.transform(feature.reshape(1,-1))
+        
+        prediction = model.predict(scaled_data)
+        
+        print(f'예측값 : {feature}')
+        # print(f'예측값 : {prediction}')
+        # return {'예측값': prediction.tolist()}
+        return {'예측값': feature}
     except Exception as e:
         print(e)
-        return{'Error': e}
-
-
-
+        return {'Error': str(e)}
 
 
 
