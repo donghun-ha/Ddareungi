@@ -2,7 +2,10 @@ import holidays
 import requests
 import hosts
 import numpy as np
-
+import pandas as pd
+import os
+import h5py
+from datetime import timedelta,datetime
 
 
 def get_weather_population(name : str):
@@ -24,6 +27,4 @@ def get_weather_population(name : str):
 
 
 
-if __name__ =='__main__':
-    # get_weather_population('잠실 관광특구')
-    time_temp()
+
