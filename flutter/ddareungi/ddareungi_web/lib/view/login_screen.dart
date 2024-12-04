@@ -22,8 +22,8 @@ class LoginScreen extends StatelessWidget {
       ),
       body: ResponsiveBreakpoints.builder(
         breakpoints: ResponsiveConfig.breakpoints,
-        child: Center(
-          child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          child: Center(
             child: Container(
               constraints: const BoxConstraints(maxWidth: 600),
               padding: const EdgeInsets.all(48.0),
@@ -33,83 +33,97 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.directions_bike,
-                    size: 120,
+                    size: _getIconSize(context),
                     color: colorScheme.primary,
                   ),
-                  const SizedBox(
-                    height: 48,
-                  ),
-                  TextFormField(
+                  const SizedBox(height: 48),
+                  _buildTextFormField(
                     controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: '아이디',
-                      border: const OutlineInputBorder(),
-                      prefixIcon: Icon(
-                        Icons.email,
-                        color: colorScheme.secondary,
-                      ),
-                      labelStyle: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 18,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: colorScheme.primary, width: 2),
-                      ),
-                    ),
-                    style: const TextStyle(fontSize: 18),
-                    keyboardType: TextInputType.emailAddress,
+                    label: '아이디',
+                    prefixIcon: Icons.email,
+                    colorScheme: colorScheme,
                   ),
                   const SizedBox(height: 24),
-                  TextFormField(
+                  _buildTextFormField(
                     controller: passwordController,
-                    decoration: InputDecoration(
-                      labelText: '비밀번호',
-                      border: const OutlineInputBorder(),
-                      prefixIcon:
-                          Icon(Icons.lock, color: colorScheme.secondary),
-                      labelStyle: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 18,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: colorScheme.primary,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    style: const TextStyle(
-                      fontSize: 18,
-                    ),
+                    label: '비밀번호',
+                    prefixIcon: Icons.lock,
+                    colorScheme: colorScheme,
                     obscureText: true,
                   ),
                   const SizedBox(height: 32),
-                  ElevatedButton(
+                  _buildLoginButton(
                     onPressed: () {
                       Get.to(() => const HomeScreen(),
                           transition: Transition.noTransition);
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      '로그인',
-                      style: TextStyle(
-                        fontSize: 20,
-                      ),
-                    ),
+                    colorScheme: colorScheme,
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  double _getIconSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth < 600) {
+      return 80; // 모바일
+    } else if (screenWidth < 1200) {
+      return 100; // 태블릿
+    }
+    return 120; // 데스크톱
+  }
+
+  _buildTextFormField({
+    required TextEditingController controller,
+    required String label,
+    required IconData prefixIcon,
+    required ColorScheme colorScheme,
+    bool obscureText = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        prefixIcon: Icon(prefixIcon, color: colorScheme.secondary),
+        labelStyle: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 18,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+      ),
+      style: const TextStyle(fontSize: 18),
+      keyboardType: obscureText
+          ? TextInputType.visiblePassword
+          : TextInputType.emailAddress,
+      obscureText: obscureText,
+    );
+  }
+
+  _buildLoginButton({
+    required VoidCallback onPressed,
+    required ColorScheme colorScheme,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: const Text(
+        '로그인',
+        style: TextStyle(fontSize: 20),
       ),
     );
   }
