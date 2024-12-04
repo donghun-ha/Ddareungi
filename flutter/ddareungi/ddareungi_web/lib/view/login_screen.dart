@@ -1,5 +1,5 @@
 import 'package:ddareungi_web/model/responsive_config.dart';
-import 'package:ddareungi_web/view/home_screen.dart';
+import 'package:ddareungi_web/view/rebalance_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -115,7 +115,7 @@ class LoginScreen extends StatelessWidget {
         // 로그인 버튼
         ElevatedButton(
           onPressed: () {
-            Get.to(() => const HomeScreen(),
+            Get.off(() => const RebalanceAi(),
                 transition: Transition.noTransition);
           },
           style: ElevatedButton.styleFrom(
