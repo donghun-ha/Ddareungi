@@ -9,12 +9,15 @@ from  songpa_office import router as test_router
 app = FastAPI()
 
 
-app.include_router(test_router, prefix="/test", tags=["test"])
-
+app.include_router(test_router, prefix="/test", tags=['test'])
 
 def connect():
     conn = pymysql.connect(
-        host=hosts.ip, user="root", password="qwer1234", db="parking", charset="utf8"
+        host=hosts.ip,
+        user='root',
+        password='qwer1234',
+        db='parking',
+        charset='utf8'
     )
     return conn
 
@@ -27,7 +30,11 @@ app.add_middleware(
     allow_headers = ['*'], # 모든 헤더 사용
 )
 
+
+
+
+
 if __name__ == "__main__":
     import uvicorn
+    uvicorn.run(app, host='127.0.0.1', port=8000, reload=True)
 
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
