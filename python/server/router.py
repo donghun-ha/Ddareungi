@@ -4,6 +4,7 @@ import hosts
 from fastapi.middleware.cors import CORSMiddleware
 from songpa_office import router as test_router
 from jamsil.jamsil import router as jamsil_router
+from data_insight import router as data_insight_router
 from login import router as login_router
 
 
@@ -13,6 +14,7 @@ app = FastAPI()
 app.include_router(test_router, prefix="/test", tags=["test"])
 app.include_router(jamsil_router, prefix="/jamsil", tags=["jamsil"])
 app.include_router(login_router, tags=["login"])
+app.include_router(data_insight_router, prefix="/data_insight", tags=["data_insight"])
 
 
 def connect():

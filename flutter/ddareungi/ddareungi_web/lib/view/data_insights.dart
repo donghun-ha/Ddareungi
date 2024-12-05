@@ -1,9 +1,9 @@
-import 'package:ddareungi_web/utils/responsive_config.dart';
 import 'package:ddareungi_web/view/rebalance_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:ddareungi_web/constants/color.dart';
 import 'package:get/get.dart';
-import 'package:responsive_framework/responsive_framework.dart';
+import 'package:ddareungi_web/vm/data_insight_handler.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class DataInsight extends StatefulWidget {
   const DataInsight({super.key});
@@ -16,16 +16,24 @@ class _DataInsightState extends State<DataInsight> {
   final ScrollController scrollController = ScrollController();
   bool isHeaderVisible = false; // 고정 헤더 표시 여부
 
+  final DataInsightHandler controller = Get.put(DataInsightHandler()); // 핸들러 등록
+
   @override
   void initState() {
     super.initState();
     scrollController.addListener(() {
       setState(() {
-        // 두 번째 화면부터 헤더 표시
         isHeaderVisible =
             scrollController.offset > MediaQuery.of(context).size.height * 0.8;
       });
     });
+    fetchStationData(); // 데이터 로드
+  }
+
+  void fetchStationData() {
+    // 로그인한 유저의 지역 정보 사용
+    const String userRegion = "송파구"; // 실제로는 로그인 핸들러에서 가져올 데이터
+    controller.fetchStationData(userRegion);
   }
 
   @override
@@ -40,31 +48,41 @@ class _DataInsightState extends State<DataInsight> {
           ],
         ),
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            controller: scrollController,
-            child: Column(
-              children: [
-                Stack(
-                  children: [
-                    firstScrollRight(context),
-                    firstScrollLeft(context),
-                    firstScrollDrawer(context),
-                  ],
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.5),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.5),
-                footer(context),
-              ],
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.errorMessage.isNotEmpty) {
+          return Center(child: Text(controller.errorMessage.value));
+        }
+
+        return Stack(
+          children: [
+            SingleChildScrollView(
+              controller: scrollController,
+              child: Column(
+                children: [
+                  Stack(
+                    children: [
+                      firstScrollRight(context),
+                      firstScrollLeft(context),
+                      firstScrollDrawer(context),
+                    ],
+                  ),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.5),
+                  _buildStationChart(controller.stationData), // 차트 추가
+                  footer(context),
+                ],
+              ),
             ),
-          ),
-          Visibility(
-            visible: isHeaderVisible,
-            child: _buildFixedHeader(context),
-          ),
-        ],
-      ),
+            Visibility(
+              visible: isHeaderVisible,
+              child: _buildFixedHeader(context),
+            ),
+          ],
+        );
+      }),
       backgroundColor: backClr,
     );
   }
@@ -73,6 +91,84 @@ class _DataInsightState extends State<DataInsight> {
   void dispose() {
     scrollController.dispose();
     super.dispose();
+  }
+
+  // 차트 위젯
+  Widget _buildStationChart(List<dynamic> stationData) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        elevation: 5,
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                '정류소 주차 공간',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            SizedBox(
+              height: 300,
+              child: BarChart(
+                BarChartData(
+                  barGroups: stationData.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    var data = entry.value;
+
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: data["parking_lot"].toDouble(),
+                          width: 20,
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          return Text(
+                            value.toInt().toString(),
+                            style: const TextStyle(fontSize: 12),
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          int index = value.toInt();
+                          if (index >= stationData.length)
+                            return const Text('');
+                          return Text(
+                            stationData[index]["station_code"],
+                            style: const TextStyle(fontSize: 10),
+                          );
+                        },
+                      ),
+                    ),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  gridData: const FlGridData(show: true),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // 고정 헤더
@@ -216,118 +312,6 @@ Widget drawerContents(BuildContext context) {
         ),
       ),
     ],
-  );
-}
-
-// 첫 번째 화면 우측 레이아웃
-Widget firstScrollRight(BuildContext context) {
-  return ResponsiveBreakpoints.builder(
-    breakpoints: ResponsiveConfig.breakpoints,
-    child: Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: Image.asset(
-            "images/dataInsights.png",
-            fit: BoxFit.cover,
-            height: MediaQuery.of(context).size.height,
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Column(
-            children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              Align(
-                alignment: Alignment.topLeft,
-                child: Image.asset(
-                  "images/seoul_bike.png",
-                  height: MediaQuery.of(context).size.height * 0.1,
-                ),
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.5),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "따릉이 재배치로",
-                    style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.height * 0.06,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "더 나은 서비스를 제공하세요!",
-                    style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.height * 0.06,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.08),
-                  Text(
-                    '서울시 자전거 대여소 데이터를 분석하여 최적의 재배치 시간을 추천합니다.',
-                    style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.height * 0.023,
-                      color: rebalanceAiClr,
-                    ),
-                  ),
-                  Text(
-                    '효율적인 운영과 이용자 편의를 동시에 만족시키는 통합 관리 플랫폼.',
-                    style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.height * 0.023,
-                      color: rebalanceAiClr,
-                    ),
-                  )
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-// 첫 번째 화면 좌측 로고
-Widget firstScrollLeft(BuildContext context) {
-  return Align(
-    alignment: Alignment.topLeft,
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GestureDetector(
-        onTap: () {
-          Get.to(() => const RebalanceAi(),
-              transition: Transition.noTransition); // 로고 클릭 시 이동
-        },
-        child: Image.asset(
-          "images/logo.png",
-          width: MediaQuery.of(context).size.width * 0.2,
-          fit: BoxFit.contain,
-        ),
-      ),
-    ),
-  );
-}
-
-// 첫 번째 화면 메뉴 버튼
-Widget firstScrollDrawer(BuildContext context) {
-  return Positioned(
-    top: 16,
-    right: 16,
-    child: Builder(
-      builder: (context) => IconButton(
-        icon: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 20, 10, 0),
-          child: Icon(
-            Icons.menu,
-            size: MediaQuery.of(context).size.height * 0.06,
-          ),
-        ),
-        onPressed: () {
-          Scaffold.of(context).openEndDrawer();
-        },
-      ),
-    ),
   );
 }
 
