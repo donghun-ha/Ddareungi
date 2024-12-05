@@ -348,3 +348,4 @@ $RECYCLE.BIN/
 flutter/ddareungi/ddareungi_web/lib/*/private.dart
 # h5 files
 *.h5
+python/Server/ws/rf/return_best.joblib
