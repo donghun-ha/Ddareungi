@@ -3,7 +3,7 @@ import pymysql
 import hosts
 from fastapi.middleware.cors import CORSMiddleware
 from songpa_office import router as test_router
-from jamsil import router as jamsil_router
+from jamsil.jamsil import router as jamsil_router
 from login import router as login_router
 
 
