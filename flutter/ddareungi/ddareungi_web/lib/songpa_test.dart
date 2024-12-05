@@ -13,7 +13,7 @@ class SongpaTest extends StatelessWidget {
         children: [
           ElevatedButton(
             onPressed: (){
-              songpaPredict(1); // 
+              test();
             }, 
             child: const Text('Test')
             )
@@ -24,8 +24,8 @@ class SongpaTest extends StatelessWidget {
   }
 
   //FFFFf
-  songpaPredict(int time )async{
-    var url = Uri.parse('http://127.0.0.1:8000/test/predict?time=$time');
+  test()async{
+    var url = Uri.parse('http://127.0.0.1:8000/test/predict');
     var response = await http.get(url);
     if(response.statusCode == 200){
     var dataConvertedJSON = json.decode(utf8.decode(response.bodyBytes));

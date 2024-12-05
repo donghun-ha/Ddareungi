@@ -346,3 +346,5 @@ $RECYCLE.BIN/
 *.csv
 flutter/ddareungi/ddareungi_web/lib/services/private.dart
 flutter/ddareungi/ddareungi_web/lib/*/private.dart
+# h5 files
+*.h5

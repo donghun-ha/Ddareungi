@@ -1,59 +1,58 @@
-import holidays
-import requests
-import hosts
+"""
+author : 신정섭
+Description : 송파구청 함수 테스트용
+Date :  2024.12.04
+"""
+
+import joblib
+from fastapi import APIRouter
 import numpy as np
 import pandas as pd
-import os
-import h5py
-from datetime import timedelta,datetime
+
+"""Feature
+연, 월, 일 -> 오늘날짜
+시간대 -> 지금 시간 + 유저 입력
+03 : API(오존)
+총생활인구수 : Dataframe 평균 or 
+유동인구 : API
+
+==================================================
+연, 월, 일, 시간대, 기온(°C), O3, 총생활인구수,유동인구, 
+휴일여부, 계절_0, 계절_1, 계절_2, 계절_3
+
+"""
 
 
-def get_temp(time : int): # 0 : 1시간후, 1 = 2시간후, 2 = 3시간후
+router = APIRouter()
+
+data = joblib.load("../data/songpa_office_model.h5")
+scaler = data["scaler"]
+model = data["model"]
+
+
+@router.get("/predict")
+async def test():
     try:
-        key = hosts.js_key
-        url=f'http://openapi.seoul.go.kr:8088/{key}/json/citydata/1/5/잠실 관광특구'
-        response = requests.get(url)
-        citydata = response.json()['CITYDATA']['WEATHER_STTS'][0]['FCST24HOURS']
-        temp =citydata[time]['TEMP'] 
-        print(time)
-        print(temp) 
-        return temp
+        # 입력 데이터 준비
+        input_scale = [2000, 2000]  # 총생활인구수, 유동인구
+        front_data = [2024, 12, 4, 14, 3, 3]  # 연, 월, 일 , 시간대, 기온, 오존
+        back_data = [1, 0, 0, 0, 0, 1]  # 휴일여부, 계절_0, 계절_1, 계절_2, 계절_3
+        # feature 합치기
+        feature = np.hstack((front_data, input_scale, back_data))
+        # 스케일링 적용
+        scaled_data = scaler.transform(feature.reshape(1, -1))
+
+        prediction = model.predict(scaled_data)
+
+        print(f"예측값 : {feature}")
+        # print(f'예측값 : {prediction}')
+        # return {'예측값': prediction.tolist()}
+        return {"예측값": feature}
     except Exception as e:
-        print('get_temp', e)
+        print(e)
+        return {"Error": str(e)}
 
 
-def get_air():
-    key = hosts.js_key
-    url = f'http://openapi.seoul.go.kr:8088/{key}/json/ListAvgOfSeoulAirQualityService/1/5/'
-    response = requests.get(url)
-    try :
-        data = response.json()
-        ozone = data['ListAvgOfSeoulAirQualityService']['row'][0]['OZONE']
-        # print(f'O3 : {ozone}') # 영어 O
-        return(ozone)
-    except Exception as e:
-        print("Error ", e)
-
-
-def get_season(month : int):
-    try:
-        if month in [3,4,5]:
-            input_season ='봄'
-        elif month in [6,7,8]:
-            input_season ='여름'
-        elif month in [9,10,11]:
-            input_season ='가을'
-        else:
-            input_season ='겨울'
-        seasons = ['봄','여름','가을','겨울']
-        result = [0]*4
-        result[seasons.index(input_season)] =1
-        print(result)
-        return result
-    except Exception as e:
-        print('get_season', e)
-if __name__ =="__main__":
-    # get_temp(1)
-    # get_air()
-    season(2)
-
+if __name__ == "__main__":
+    test()
+    # a()
