@@ -3,14 +3,13 @@ import pymysql
 import hosts
 from fastapi.middleware.cors import CORSMiddleware
 from  songpa_office import router as test_router
-from jamsil.jamsil import router as jamsil_router
+
 
 
 app = FastAPI()
 
 
 app.include_router(test_router, prefix="/test", tags=["test"])
-app.include_router(jamsil_router, prefix="/jamsil", tags=["jamsil"])
 
 
 def connect():
