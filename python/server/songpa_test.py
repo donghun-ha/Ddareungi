@@ -34,7 +34,26 @@ def get_air():
     except Exception as e:
         print("Error ", e)
 
+
+def get_season(month : int):
+    try:
+        if month in [3,4,5]:
+            input_season ='봄'
+        elif month in [6,7,8]:
+            input_season ='여름'
+        elif month in [9,10,11]:
+            input_season ='가을'
+        else:
+            input_season ='겨울'
+        seasons = ['봄','여름','가을','겨울']
+        result = [0]*4
+        result[seasons.index(input_season)] =1
+        print(result)
+        return result
+    except Exception as e:
+        print('get_season', e)
 if __name__ =="__main__":
-    get_temp(1)
-    get_air()
+    # get_temp(1)
+    # get_air()
+    season(2)
 
