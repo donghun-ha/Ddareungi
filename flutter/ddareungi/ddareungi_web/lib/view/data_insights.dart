@@ -5,14 +5,29 @@ import 'package:ddareungi_web/constants/color.dart';
 import 'package:get/get.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
-class DataInsights extends StatefulWidget {
-  const DataInsights({super.key});
+class DataInsight extends StatefulWidget {
+  const DataInsight({super.key});
 
   @override
-  State<DataInsights> createState() => _DataInsightsState();
+  State<DataInsight> createState() => _DataInsightState();
 }
 
-class _DataInsightsState extends State<DataInsights> {
+class _DataInsightState extends State<DataInsight> {
+  final ScrollController scrollController = ScrollController();
+  bool isHeaderVisible = false; // 고정 헤더 표시 여부
+
+  @override
+  void initState() {
+    super.initState();
+    scrollController.addListener(() {
+      setState(() {
+        // 두 번째 화면부터 헤더 표시
+        isHeaderVisible =
+            scrollController.offset > MediaQuery.of(context).size.height * 0.8;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,29 +40,74 @@ class _DataInsightsState extends State<DataInsights> {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // 첫 번째 스크롤 페이지
-            Stack(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            controller: scrollController,
+            child: Column(
               children: [
-                firstScrollRight(context),
-                firstScrollLeft(context),
-                firstScrollDrawer(context),
+                Stack(
+                  children: [
+                    firstScrollRight(context),
+                    firstScrollLeft(context),
+                    firstScrollDrawer(context),
+                  ],
+                ),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.5),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.5),
+                footer(context),
               ],
             ),
-          ],
-        ),
+          ),
+          Visibility(
+            visible: isHeaderVisible,
+            child: _buildFixedHeader(context),
+          ),
+        ],
       ),
       backgroundColor: backClr,
     );
   }
-} // Functions
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  // 고정 헤더
+  Widget _buildFixedHeader(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: isHeaderVisible ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 500),
+      child: Container(
+        height: 80,
+        color: Colors.transparent,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () {
+                Get.to(() => const RebalanceAi(),
+                    transition: Transition.noTransition);
+              },
+              child: Image.asset(
+                "images/logo.png",
+                width: MediaQuery.of(context).size.width * 0.2,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 // Drawer Widget
 Widget drawerContents(BuildContext context) {
   return Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch, // 세로 정렬
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -84,8 +144,8 @@ Widget drawerContents(BuildContext context) {
             );
           },
           style: TextButton.styleFrom(
-            alignment: Alignment.centerLeft, // 텍스트를 왼쪽 정렬
-            minimumSize: const Size(0, 0), // 최소 크기 제거
+            alignment: Alignment.centerLeft,
+            minimumSize: const Size(0, 0),
           ),
           child: Text(
             "REBALANCE AI",
@@ -100,12 +160,12 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            Get.off(() => const DataInsights(),
+            Get.off(() => const DataInsight(),
                 transition: Transition.noTransition);
           },
           style: TextButton.styleFrom(
-            alignment: Alignment.centerLeft, // 텍스트를 왼쪽 정렬
-            minimumSize: const Size(0, 0), // 최소 크기 제거
+            alignment: Alignment.centerLeft,
+            minimumSize: const Size(0, 0),
           ),
           child: Text(
             "DATA INSIGHTS",
@@ -120,11 +180,11 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            //
+            // 다른 기능 추가 가능
           },
           style: TextButton.styleFrom(
-            alignment: Alignment.centerLeft, // 텍스트를 왼쪽 정렬
-            minimumSize: const Size(0, 0), // 최소 크기 제거
+            alignment: Alignment.centerLeft,
+            minimumSize: const Size(0, 0),
           ),
           child: Text(
             "PROFILE",
@@ -139,11 +199,11 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            //
+            // 로그아웃 기능 추가
           },
           style: TextButton.styleFrom(
-            alignment: Alignment.centerLeft, // 텍스트를 왼쪽 정렬
-            minimumSize: const Size(0, 0), // 최소 크기 제거
+            alignment: Alignment.centerLeft,
+            minimumSize: const Size(0, 0),
           ),
           child: Text(
             "LOGOUT",
@@ -159,23 +219,20 @@ Widget drawerContents(BuildContext context) {
   );
 }
 
-// rebalance_ai first scroll page
+// 첫 번째 화면 우측 레이아웃
 Widget firstScrollRight(BuildContext context) {
-  // 배경 레이아웃
   return ResponsiveBreakpoints.builder(
     breakpoints: ResponsiveConfig.breakpoints,
     child: Row(
       children: [
-        // 왼쪽 절반: 이미지
         Expanded(
           flex: 1,
           child: Image.asset(
-            "../images/datainsights.png",
+            "images/dataInsights.png",
             fit: BoxFit.cover,
             height: MediaQuery.of(context).size.height,
           ),
         ),
-        // 오른쪽 절반: 콘텐츠
         Expanded(
           flex: 1,
           child: Column(
@@ -231,22 +288,28 @@ Widget firstScrollRight(BuildContext context) {
   );
 }
 
-// first_page_scroll_right
+// 첫 번째 화면 좌측 로고
 Widget firstScrollLeft(BuildContext context) {
   return Align(
-    alignment: Alignment.topLeft, // 왼쪽 상단에 고정
+    alignment: Alignment.topLeft,
     child: Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Image.asset(
-        "images/logo.png",
-        width: MediaQuery.of(context).size.width * 0.2,
-        fit: BoxFit.contain,
+      child: GestureDetector(
+        onTap: () {
+          Get.to(() => const RebalanceAi(),
+              transition: Transition.noTransition); // 로고 클릭 시 이동
+        },
+        child: Image.asset(
+          "images/logo.png",
+          width: MediaQuery.of(context).size.width * 0.2,
+          fit: BoxFit.contain,
+        ),
       ),
     ),
   );
 }
 
-// first_page_menu
+// 첫 번째 화면 메뉴 버튼
 Widget firstScrollDrawer(BuildContext context) {
   return Positioned(
     top: 16,
@@ -264,6 +327,22 @@ Widget firstScrollDrawer(BuildContext context) {
           Scaffold.of(context).openEndDrawer();
         },
       ),
+    ),
+  );
+}
+
+// Footer
+Widget footer(BuildContext context) {
+  return Container(
+    child: Column(
+      children: [
+        Text(
+          "© Copyright 2024 CycleSync",
+          style: TextStyle(
+            fontSize: MediaQuery.of(context).size.height * 0.02,
+          ),
+        )
+      ],
     ),
   );
 }
