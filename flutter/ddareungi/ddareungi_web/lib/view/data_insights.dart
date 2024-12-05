@@ -250,14 +250,14 @@ Widget firstScrollRight(BuildContext context) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "따릉이 재배치로",
+                    "서울시 따릉이 대여 데이터를",
                     style: TextStyle(
                       fontSize: MediaQuery.of(context).size.height * 0.06,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    "더 나은 서비스를 제공하세요!",
+                    "한눈에 확인하세요!",
                     style: TextStyle(
                       fontSize: MediaQuery.of(context).size.height * 0.06,
                       fontWeight: FontWeight.bold,
@@ -265,14 +265,14 @@ Widget firstScrollRight(BuildContext context) {
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.08),
                   Text(
-                    '서울시 자전거 대여소 데이터를 분석하여 최적의 재배치 시간을 추천합니다.',
+                    '이 페이지는 관리자에게 대여소 운영 현황을 직관적으로 제공합니다.',
                     style: TextStyle(
                       fontSize: MediaQuery.of(context).size.height * 0.023,
                       color: rebalanceAiClr,
                     ),
                   ),
                   Text(
-                    '효율적인 운영과 이용자 편의를 동시에 만족시키는 통합 관리 플랫폼.',
+                    '스테이션별 대여 및 반납 추세, 시간대별 이용 패턴을 확인할 수 있습니다.',
                     style: TextStyle(
                       fontSize: MediaQuery.of(context).size.height * 0.023,
                       color: rebalanceAiClr,

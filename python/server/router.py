@@ -3,6 +3,7 @@ import pymysql
 import hosts
 from fastapi.middleware.cors import CORSMiddleware
 from  songpa_office import router as test_router
+from map import router as map_router
 
 
 
@@ -10,6 +11,7 @@ app = FastAPI()
 
 
 app.include_router(test_router, prefix="/test", tags=["test"])
+app.include_router(map_router, prefix="/map", tags=["map"])
 
 
 def connect():
