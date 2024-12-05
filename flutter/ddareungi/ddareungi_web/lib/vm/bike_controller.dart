@@ -1,4 +1,4 @@
-import 'package:ddareungi_web/service/bike_service.dart';
+import 'package:ddareungi_web/services/bike_service.dart';
 import 'package:get/get.dart';
 
 class BikeController extends GetxController {
