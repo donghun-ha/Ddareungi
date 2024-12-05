@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 import pymysql
 import hosts
@@ -17,37 +17,56 @@ def connect():
     )
 
 
-# 로그인 요청 데이터 모델
+# 요청 데이터 모델
 class LoginRequest(BaseModel):
     id: str
     pw: str
 
 
 # 로그인 엔드포인트
-@router.post("/")
+@router.post("/login")
 async def login(request: LoginRequest):
     conn = connect()
     try:
         with conn.cursor() as cursor:
-            # 사용자 인증 쿼리
             query = "SELECT id, pw, region FROM user WHERE id = %s AND pw = %s"
             cursor.execute(query, (request.id, request.pw))
             user = cursor.fetchone()
 
             if not user:
-                # 인증 실패 시 HTTP 401 반환
                 raise HTTPException(
                     status_code=401, detail="Invalid username or password"
                 )
 
-            # 인증 성공 시 사용자 정보 반환
             return {
                 "message": "Login successful",
                 "id": user[0],
                 "region": user[2],
             }
     except Exception as e:
-        # 데이터베이스 오류 처리
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Server error: {e}")
+    finally:
+        conn.close()
+
+
+# 프로필 엔드포인트
+@router.get("/profile/{user_id}")
+async def get_profile(user_id: str):
+    conn = connect()
+    try:
+        with conn.cursor() as cursor:
+            query = "SELECT id, region FROM user WHERE id = %s"
+            cursor.execute(query, (user_id,))
+            user = cursor.fetchone()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            return {
+                "id": user[0],
+                "region": user[1],
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Server error: {e}")
     finally:
         conn.close()

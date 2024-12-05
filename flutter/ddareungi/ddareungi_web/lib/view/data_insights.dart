@@ -333,16 +333,14 @@ Widget firstScrollDrawer(BuildContext context) {
 
 // Footer
 Widget footer(BuildContext context) {
-  return Container(
-    child: Column(
-      children: [
-        Text(
-          "© Copyright 2024 CycleSync",
-          style: TextStyle(
-            fontSize: MediaQuery.of(context).size.height * 0.02,
-          ),
-        )
-      ],
-    ),
+  return Column(
+    children: [
+      Text(
+        "© Copyright 2024 CycleSync",
+        style: TextStyle(
+          fontSize: MediaQuery.of(context).size.height * 0.02,
+        ),
+      )
+    ],
   );
 }

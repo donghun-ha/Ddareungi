@@ -4,15 +4,13 @@ import hosts
 from fastapi.middleware.cors import CORSMiddleware
 from songpa_office import router as test_router
 from login import router as login_router
-from profile import router as profile_router
 
 
 app = FastAPI()
 
 
 app.include_router(test_router, prefix="/test", tags=["test"])
-app.include_router(login_router, prefix="/login", tags=["login"])
-app.include_router(profile_router, prefix="/profile", tags=["profile"])
+app.include_router(login_router, tags=["login"])
 
 
 def connect():
