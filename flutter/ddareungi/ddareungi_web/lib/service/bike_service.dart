@@ -1,4 +1,4 @@
-import 'package:ddareungi_web/services/private.dart';
+import 'package:ddareungi_web/service/private.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
