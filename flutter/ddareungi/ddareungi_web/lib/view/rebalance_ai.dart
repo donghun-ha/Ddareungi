@@ -17,7 +17,7 @@ class RebalanceAi extends StatefulWidget {
 class _RebalanceAiState extends State<RebalanceAi> {
   final ScrollController scrollController = ScrollController();
   final MapController mapController = MapController();
-  bool isHeaderVisible = false; // 헤더 고정 여부
+  bool isHeaderVisible = false;
 
   @override
   void initState() {
@@ -45,6 +45,7 @@ class _RebalanceAiState extends State<RebalanceAi> {
       endDrawer: Drawer(
         width: MediaQuery.of(context).size.width * 0.5,
         child: ListView(
+          padding: EdgeInsets.zero,
           children: [
             drawerContents(context),
           ],
@@ -70,9 +71,8 @@ class _RebalanceAiState extends State<RebalanceAi> {
               ],
             ),
           ),
-          AnimatedOpacity(
-            opacity: isHeaderVisible ? 1.0 : 0.0, // 스르륵 나타나기
-            duration: const Duration(milliseconds: 500),
+          Visibility(
+            visible: isHeaderVisible,
             child: _buildFixedHeader(context),
           ),
         ],
@@ -87,37 +87,30 @@ class _RebalanceAiState extends State<RebalanceAi> {
     super.dispose();
   }
 
-  // 고정 헤더 (두 번째 화면부터 나타남)
+  // 고정 헤더
   Widget _buildFixedHeader(BuildContext context) {
-    return Container(
-      height: 80,
-      color: Colors.transparent, // 배경 투명
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () {
-              Get.to(() => const RebalanceAi(),
-                  transition: Transition.noTransition);
-            },
-            child: Image.asset(
-              "images/logo.png",
-              width: MediaQuery.of(context).size.width * 0.2,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: IconButton(
-              icon: Icon(
-                Icons.menu,
-                size: MediaQuery.of(context).size.height * 0.06,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openEndDrawer();
+    return AnimatedOpacity(
+      opacity: isHeaderVisible ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 500),
+      child: Container(
+        height: 80,
+        color: Colors.transparent,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () {
+                Get.to(() => const RebalanceAi(),
+                    transition: Transition.noTransition);
               },
+              child: Image.asset(
+                "images/logo.png",
+                width: MediaQuery.of(context).size.width * 0.2,
+                fit: BoxFit.contain,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -179,7 +172,7 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            Get.off(() => const DataInsights(),
+            Get.off(() => const DataInsight(),
                 transition: Transition.noTransition);
           },
           style: TextButton.styleFrom(
@@ -196,11 +189,49 @@ Widget drawerContents(BuildContext context) {
           ),
         ),
       ),
+      ListTile(
+        title: TextButton(
+          onPressed: () {
+            // 다른 기능 추가 가능
+          },
+          style: TextButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            minimumSize: const Size(0, 0),
+          ),
+          child: Text(
+            "PROFILE",
+            style: TextStyle(
+              fontSize: MediaQuery.of(context).size.height * 0.06,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ),
+      ),
+      ListTile(
+        title: TextButton(
+          onPressed: () {
+            // 로그아웃 기능 추가
+          },
+          style: TextButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            minimumSize: const Size(0, 0),
+          ),
+          child: Text(
+            "LOGOUT",
+            style: TextStyle(
+              fontSize: MediaQuery.of(context).size.height * 0.06,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ),
+      ),
     ],
   );
 }
 
-// rebalance_ai first scroll page
+// 첫 번째 화면 우측 레이아웃
 Widget firstScrollRight(BuildContext context) {
   return ResponsiveBreakpoints.builder(
     breakpoints: ResponsiveConfig.breakpoints,
@@ -269,7 +300,7 @@ Widget firstScrollRight(BuildContext context) {
   );
 }
 
-// first_page_scroll_left
+// 첫 번째 화면 좌측 로고
 Widget firstScrollLeft(BuildContext context) {
   return Align(
     alignment: Alignment.topLeft,
@@ -290,7 +321,7 @@ Widget firstScrollLeft(BuildContext context) {
   );
 }
 
-// first_page_menu
+// 첫 번째 화면 메뉴 버튼
 Widget firstScrollDrawer(BuildContext context) {
   return Positioned(
     top: 16,
@@ -312,7 +343,7 @@ Widget firstScrollDrawer(BuildContext context) {
   );
 }
 
-// Map functions
+// 지도 화면
 Widget mapFuntion(
     BuildContext context, MapController mapController, double initialZoom) {
   return Container(
