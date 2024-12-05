@@ -25,9 +25,9 @@ import pandas as pd
 
 router = APIRouter()
 
-data = joblib.load("../data/songpa_office_model.h5")
-scaler = data["scaler"]
-model = data["model"]
+# data = joblib.load("../data/songpa_office_model.h5")
+# scaler = data["scaler"]
+# model = data["model"]
 
 
 @router.get("/predict")
