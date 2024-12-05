@@ -1,6 +1,5 @@
 import 'package:ddareungi_web/utils/responsive_config.dart';
 import 'package:ddareungi_web/view/login_screen.dart';
-// import 'package:ddareungi_web/view/rebalance_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_framework/responsive_framework.dart';

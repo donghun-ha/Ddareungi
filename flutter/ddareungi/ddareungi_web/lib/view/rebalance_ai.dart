@@ -1,5 +1,6 @@
 import 'package:ddareungi_web/utils/responsive_config.dart';
 import 'package:ddareungi_web/view/data_insights.dart';
+import 'package:ddareungi_web/view/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:ddareungi_web/constants/color.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -192,7 +193,7 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            // 다른 기능 추가 가능
+            Get.off(() => Profile(), transition: Transition.noTransition);
           },
           style: TextButton.styleFrom(
             alignment: Alignment.centerLeft,
