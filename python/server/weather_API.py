@@ -190,14 +190,16 @@ async def accumPred(t):
             rent=pred['rent_prediction']
             retu=pred['return_prediction']
             fill_c=20-c+rent-retu
-            future_time=datetime.now()+timedelta(hours=i)
-            current_datetime = future_time.strftime('%Y-%m-%d')
-            time=future_time.hour
+            current_time = datetime.now()
+            future_time = current_time + timedelta(hours=i)
+            current_datetime = current_time.strftime('%Y-%m-%d %H:%M:%S')
+            future_datetime = future_time.strftime('%m%d%H')
+            # time=future_time.hour
             await insertlog(
                 user_id='songpa',
                 station_code='ST-2574',
                 date=current_datetime,
-                standard_time=time,
+                standard_time=future_datetime,
                 cr_count=c,
                 rent=rent,
                 restore=retu,
