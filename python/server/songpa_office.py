@@ -145,7 +145,8 @@ def get_station():
         # print(f"현재 사용 가능한 자전거 수: {target_station['parkingBikeTotCnt']}")
         # print(f"거치대 개수: {target_station['rackTotCnt']}")
         # print(f"거치율: {target_station['shared']}%")
-        return int(target_station['parkingBikeTotCnt']), int(target_station['rackTotCnt']) #현재 , 거치대 
+        # print(f'LCD + QR 거치율 : {int(target_station['parkingBikeTotCnt']) / (int(target_station['rackTotCnt'])+15)}')
+        return int(target_station['parkingBikeTotCnt']), (int(target_station['rackTotCnt'])+15) #현재 , 거치대 
     else:
         print(" 송파구청 데이터 없음")
 
@@ -159,19 +160,26 @@ def get_air():
         # print(f'O3 : {ozone}') # 영어 O
         return(ozone)
     except Exception as e:
-        print("Error ", e)
+        print("air ", e)
 
 
 def songpa_cal(total, count):
     # 30%, 80% 
-    min_count = total * 0.2
-    max_count = total * 1
-
+    min_count = np.trunc(total * 0.7)
+    max_count = np.trunc(total * 1.5)
+    # d_count = total * 0.7
     # 미래 
+    # if (count - d_count) > 0 : # 최대보다 예상치가 크면 +
+    #     result=-(count - d_count) # result 만큼 빼기
+    # elif (count - d_count) < 0 : # 최소보다 작으면 -
+    #     result = -(count - d_count) # result 만큼 채우기
+    # else:
+    #     result = 0
+    # return result
     if (count - max_count) > 0 : # 최대보다 예상치가 크면 +
-        result=-(count - max_count) # 그 차이만큼 빼기
+        result=-(count - max_count) # result 만큼 빼기
     elif (count - min_count) < 0 : # 최소보다 작으면 -
-        result = -(count - min_count)
+        result = -(count - min_count) # result 만큼 채우기
     else:
         result = 0
     return result
@@ -188,7 +196,7 @@ def insert_songpa(date, current, rent, restore, fill_count,standard_time):
         print('ok')
         
     except Exception as e:
-        print('ERROR',e)
+        print('insert_Error',e)
 
 @router.get('/predict')
 def test():
@@ -198,8 +206,9 @@ def test():
         temp_data = get_temp()  # 24시간 기온 데이터
         o3 = get_air()  # 대기질 데이터 (한 번만 호출)
         results= []
-        count = (station_init+15)  # 초기 자전거 수
-        print(f'구획수 {total_rack}')
+        count = station_init  # 초기 자전거 수
+        
+        # print(f'구획수 {total_rack}')
             
         for i in range(24):  # 24시간 예측
             year, month, day, hour, standard_time = get_date(i)
@@ -212,14 +221,20 @@ def test():
             feature = np.hstack((year, month, day, hour, temp, o3,
                                 total_population, floating_population,
                                 holiday, seasons))
-            
+            print(f'년 월 일{year, month, day}')
+            print(f'시간 {standard_time}')
+            print(f'기온 {temp}')
+            print(f'오존 {o3}')
+            print(f'총 생활인구 {total_population}')
+            print(f'총 유동인구 {floating_population}')
+            print(f'휴일 여부 {holiday}')
+            print(f'계절 {seasons}')
             scaled_data = scaler.transform(feature.reshape(1, -1))
             prediction = model.predict(scaled_data)[0]  # 대여/반납 예측
             # 첫 번째 반복과 이후 반복 처리
             fill_count = songpa_cal(total_rack,count)
             count = count - np.round(prediction[0]) + np.round(prediction[1])  # 이후 값 업데이트
-            insert_songpa(datetime.now().date(), count, prediction[0], prediction[1],fill_count, standard_time) # DB입력
-                # print(f'{i}시간 후 결과: {count}')
+            insert_songpa(datetime.now(), count, prediction[0], prediction[1],fill_count, standard_time) # DB입력
             hour_result = {
                 'hour': hour,
                 'standard_time' : standard_time,
@@ -234,7 +249,7 @@ def test():
         
     except Exception as e:
         print(e)
-        return {'Error': str(e)}
+        return {'predict_results': str(e)}
     
 
 
