@@ -17,7 +17,7 @@ async def jamsil_insert(prediction_data: list, current_bikes: int):
         conn = connect()
         curs = conn.cursor()
         
-        current_date = datetime.now().strftime('%Y-%m-%d')
+        current_date = datetime.now()
         
         for data in prediction_data:
             # 월일시간을 하나의 숫자로 조합 (예: 12월 5일 17시 -> 120517)

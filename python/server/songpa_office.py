@@ -3,10 +3,10 @@ import requests
 import hosts
 import joblib
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime,timedelta
 import holidays
 import pandas as pd
-
+import pymysql
 """
 author : 신정섭
 Description : 송파구청 feature - api & flutter 연결
@@ -15,32 +15,121 @@ Usage : http://openapi.seoul.go.kr:8088/API_Key/json/citydata/1/5/잠실 관광�
 Usage : http://openapi.seoul.go.kr:8088/API_Key/json/ListAvgOfSeoulAirQualityService/1/5/
 
 
-<Feature>
-연, 월, 일 -> 오늘날짜
-시간대 -> 지금 시간 + 유저 입력
-03 : get_air
-총생활인구수 : Dataframe 평균 or 
-유동인구 : get_weather_poplulation
-
-==================================================
-연, 월, 일, 시간대, 기온(°C), O3, 총생활인구수,유동인구, 
-휴일여부, 계절_0, 계절_1, 계절_2, 계절_3
-
+<Feature> 14개
+연, 월,일,
+시간대 
+기온 = api
+03 = get_air(실시간 오존 정보 / 구글 api 찾아봐야함)
+총생활인구수, 유동인구 = get_weather_poplulation(학습한 dataframe의 평균값 사용)
+휴일여부_평일, 휴일여부_주말 = 현재 날짜 + 유저 입력시간의 휴일 여부
+계절 = 현재 날짜 + 유저 입력시간의 계절 (3~5 봄 / 6~8 여름 / 9~11 가을 / 12~2 겨울)
 """
-
-
-# data= joblib.load('../data/songpa_office_model.h5')
-# scaler = data['scaler']
-# model = data['model']
 
 
 router = APIRouter()
 
+# 예측 모델 load, 
+songpa= joblib.load('../data/송파구청.h5')
+scaler = songpa['scaler']
+model = songpa['model']
 
-# 날씨 불러오는 함수
-def get_population(name: str):
-    key = hosts.js_key
-    url = f"http://openapi.seoul.go.kr:8088/{key}/json/citydata/1/5/{name}"
+def connect():
+    conn = pymysql.connect(
+        host=hosts.ip,
+        user='root',
+        password='qwer1234',
+        db='ttareunggo',
+        charset='utf8'
+    )
+    return conn
+
+def get_date(time : int):
+        
+        try:
+            now = datetime.now()
+            add = timedelta(hours=time) # 
+            result = now + add
+            standard_time = result.strftime("%m%d%H")
+            print(result.year, result.month, result.day, result.hour, standard_time)
+            return result.year, result.month, result.day, result.hour,int(standard_time)
+        except Exception as e:
+            print('get_date', e)
+
+
+def get_temp(): # 0 : 1시간후, 1 = 2시간후, 2 = 3시간후
+    try:
+        key = hosts.js_key
+        url=f'http://openapi.seoul.go.kr:8088/{key}/json/citydata/1/5/잠실 관광특구'
+        response = requests.get(url)
+        citydata = response.json()['CITYDATA']['WEATHER_STTS'][0]['FCST24HOURS']
+        # for count in range(23):
+        result = [citydata[count]['TEMP'] for count in range(24)]
+        # temp =citydata[count]['TEMP']  # [0]값 +1 해줘야함
+        # print(f'{time}시간 후 ')
+            # print(f'기온 {temp}') 
+        # print(result)
+        return result
+    except Exception as e:
+        print('get_temp', e)
+
+
+def get_holiday(time : int):
+    try:
+        now=datetime.today()
+        add = timedelta(hours=time) # time : 유저가 선택한 시간
+        result = now + add  # 현재 시간 + 유저가 선택한 시간
+        kr_holidays = holidays.KR()
+        if result.weekday() >= 5 or result in kr_holidays : 
+            # print([0,1])
+            return [0,1]
+        else :
+            # print([1,0])
+            return [1,0]
+    except Exception as e:
+        print('is_holiday', e)
+
+
+def get_season(month : int):
+    try:
+        if month in [3,4,5]:
+            input_season ='봄'
+        elif month in [6,7,8]:
+            input_season ='여름'
+        elif month in [9,10,11]:
+            input_season ='가을'
+        else:
+            input_season ='겨울'
+        seasons = ['봄','여름','가을','겨울']
+        result = [0]*4
+        # print(result)
+        result[seasons.index(input_season)] =1
+        # print(result)
+        return result
+    except Exception as e:
+        print('get_season', e)
+
+
+
+
+
+def get_population(time : int, holiday : int, month : int):
+    try :
+        df=pd.read_csv('../data/songpa_station_final.csv')
+        if holiday == 1:
+            holiday ='평일'
+        else :
+            holiday ='휴일'
+        df=df[(df['월'] == month) & (df['시간대']==time) &(df['휴일여부'] == holiday)]
+        # print(df['총생활인구수'].mean())
+        # print(df['유동인구'].mean())
+
+        return df['총생활인구수'].mean(), df['유동인구'].mean()
+    except Exception as e:
+        print('get_population',e)
+
+def get_station():
+    key =hosts.js_key
+    url = f"http://openapi.seoul.go.kr:8088/{key}/json/bikeList/1001/2000"
     response = requests.get(url)
     data = response.json()
 # 롯데타워 잠실역 2번출구 따릉이 스테이션 정보 찾기
@@ -61,17 +150,15 @@ def get_population(name: str):
     else:
         print(" 송파구청 데이터 없음")
 
-
-# 오존 불러오는 함수
 def get_air():
     key = hosts.js_key
-    url = f"http://openapi.seoul.go.kr:8088/{key}/json/ListAvgOfSeoulAirQualityService/1/5/"
+    url = f'http://openapi.seoul.go.kr:8088/{key}/json/ListAvgOfSeoulAirQualityService/1/5/'
     response = requests.get(url)
-    try:
+    try :
         data = response.json()
-        ozone = data["ListAvgOfSeoulAirQualityService"]["row"][0]["OZONE"]
+        ozone = data['ListAvgOfSeoulAirQualityService']['row'][0]['OZONE']
         # print(f'O3 : {ozone}') # 영어 O
-        return ozone
+        return(ozone)
     except Exception as e:
         print("air ", e)
 
@@ -96,6 +183,7 @@ def songpa_cal(total, count):
     else:
         result = 0
     return result
+        
 
 def insert_songpa(date, current, rent, restore, fill_count,standard_time):
     try:
@@ -110,47 +198,8 @@ def insert_songpa(date, current, rent, restore, fill_count,standard_time):
     except Exception as e:
         print('insert_Error',e)
 
-# 기온 예보
-def get_temp(time: int):  # 0 : 1시간후, 1 = 2시간후, 2 = 3시간후
-    key = hosts.js_key
-    url = f"http://openapi.seoul.go.kr:8088/{key}/json/citydata/1/5/잠실 관광특구"
-    response = requests.get(url)
-    citydata = response.json()["CITYDATA"]["WEATHER_STTS"][0]["FCST24HOURS"]
-    temp = citydata[time - 1]["TEMP"]
-    # print(citydata[time]['TEMP'])
-    return temp
-
-
-# 주말 여부
-def is_holiday():
-    now = datetime.now()
-    kr_holidays = holidays.KR()
-    if now.weekday() >= 5 or now in kr_holidays:
-        # print([0,1])
-        return [0, 1]
-    else:
-        # print([1,0])
-        return [1, 0]
-
-
-def get_date(time: int):
-    now = datetime.now()
-    add = timedelta(hours=time)
-    result = now + add
-    return result.year, result.month, result.day, result.hour
-
-
-def get_population(time: int, holiday: int, month: int):
-    df = pd.read_csv("python/data/songpa_station_final.csv", index_col=0)
-    df = df[(df["월"] == month) & (df["시간대"] == time) & (df["휴일여부"] == holiday)]
-    print(df["총생활인구수"].mean())
-    print(df["유동인구"].mean())
-
-
-# 연, 월, 일, 시간대, 기온(°C), O3, 총생활인구수,유동인구, 휴일여부_0,휴일여부_1, 계절_0, 계절_1, 계절_2, 계절_3
-# 대여대수, 반납대수 불러오는 함수
-@router.get("/predict/")
-async def test(time: int):
+@router.get('/predict')
+def test():
     try:
         # 초기값 설정
         station_init, total_rack = get_station()  # 스테이션 초기 상태
@@ -173,7 +222,7 @@ async def test(time: int):
                                 total_population, floating_population,
                                 holiday, seasons))
             print(f'년 월 일{year, month, day}')
-            print(f'시간 {standard_time}')
+            print(f'시간 {hour}')
             print(f'기온 {temp}')
             print(f'오존 {o3}')
             print(f'총 생활인구 {total_population}')
@@ -185,7 +234,7 @@ async def test(time: int):
             # 첫 번째 반복과 이후 반복 처리
             fill_count = songpa_cal(total_rack,count)
             count = count - np.round(prediction[0]) + np.round(prediction[1])  # 이후 값 업데이트
-            insert_songpa(datetime.now(), count, prediction[0], prediction[1],fill_count, standard_time) # DB입력
+            # insert_songpa(datetime.now(), count, prediction[0], prediction[1],fill_count, standard_time) # DB입력
             hour_result = {
                 'hour': hour,
                 'standard_time' : standard_time,
@@ -194,7 +243,10 @@ async def test(time: int):
                 'return_predict': np.round(prediction[1]),   # 반납 예측
                 'fill_count' : fill_count
             }
-        }
+            results.append(hour_result)
+        
+        return {'results': results} 
+        
     except Exception as e:
         print(e)
         return {'predict_results': str(e)}
