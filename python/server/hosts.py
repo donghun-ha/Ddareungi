@@ -1,6 +1,4 @@
 ip = "192.168.50.87"
-# ip = "127.0.0.1"
+# ip = '127.0.0.1' 
 
-
-js_key = "496c726e54746c733132325669414e57"
-air = "0Y8ETW1YaW0rslexJssMDDXfYHrwuNryTEZTgqBdsLMEMnQCAzRiSo%2FbZkoNRov6JMUnpeKx%2FdZuaCsNNFW7Dw%3D%3D"
+js_key= '496c726e54746c733132325669414e57'
