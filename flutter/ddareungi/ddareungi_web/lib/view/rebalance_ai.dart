@@ -1,4 +1,5 @@
 import 'package:ddareungi_web/model/responsive_config.dart';
+import 'package:ddareungi_web/view/companyIntro.dart';
 import 'package:ddareungi_web/view/data_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:ddareungi_web/constants/color.dart';
@@ -192,14 +193,16 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            // 다른 기능 추가 가능
+            Get.to(
+              ()=> const Companyintro()
+            );
           },
           style: TextButton.styleFrom(
             alignment: Alignment.centerLeft,
             minimumSize: const Size(0, 0),
           ),
           child: Text(
-            "PROFILE",
+            "COMPANY INTRO",
             style: TextStyle(
               fontSize: MediaQuery.of(context).size.height * 0.06,
               fontWeight: FontWeight.bold,
