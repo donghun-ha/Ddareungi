@@ -1,21 +1,15 @@
-import 'dart:ui';
-
+import 'package:ddareungi_web/constants/color.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import 'package:ddareungi_web/view/data_insights.dart';
+import 'package:ddareungi_web/view/rebalance_ai.dart';
 
-class Companyintro extends StatefulWidget {
-  const Companyintro({super.key});
-
-  @override
-  State<Companyintro> createState() => _CompanyScreenState();
-}
-
-class _CompanyScreenState extends State<Companyintro> {
-  int _selectedIndex = 0;
+class CompanyIntro extends StatelessWidget {
+  const CompanyIntro({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isMobile = ResponsiveBreakpoints.of(context).isMobile;
     final bool isTablet = ResponsiveBreakpoints.of(context).isTablet;
 
@@ -27,10 +21,10 @@ class _CompanyScreenState extends State<Companyintro> {
               foregroundColor: Colors.black,
             )
           : null,
-      drawer: (isMobile || isTablet) ? _buildDrawer() : null,
+      drawer: (isMobile || isTablet) ? _buildDrawer(context) : null,
       body: Row(
         children: [
-          if (!isMobile && !isTablet) _buildSidebar(),
+          if (!isMobile && !isTablet) _buildDrawer(context),
           Expanded(
             child: _buildContent(),
           ),
@@ -39,141 +33,164 @@ class _CompanyScreenState extends State<Companyintro> {
     );
   }
 
-  Widget _buildDrawer() {
+  Widget _buildDrawer(BuildContext context) {
     return Drawer(
-      child: _buildSidebar(),
+      child: drawerContents(context),
     );
   }
 
-  Widget _buildSidebar() {
-    final menuItems = [
-      {'title': 'COMPANY INTOR', 'index': 0},
-      {'title': 'DATA INSIGHTS', 'index': 1},
-      {'title': 'HOME', 'index': 2},
-      {'title': 'LOGOUT', 'index': 3},
-    ];
+  Widget _buildDrawerItem(BuildContext context, String title,
+      VoidCallback onPressed, Color textColor) {
+    // 현재 페이지 확인 로직 수정
+    bool isCurrentPage = false;
+    if (title == "COMPANY INTRO") {
+      isCurrentPage = true; // CompanyIntro 페이지에서는 항상 true
+    } else if (title == "REBALANCE AI" && Get.currentRoute == '/rebalance-ai') {
+      isCurrentPage = false;
+    } else if (title == "DATA INSIGHTS" &&
+        Get.currentRoute == '/data-insights') {
+      isCurrentPage = false;
+    }
 
-    return Container(
-      width: 250,
-      color: Colors.white,
-      child: ListView.builder(
-        itemCount: menuItems.length,
-        itemBuilder: (context, index) {
-          final item = menuItems[index];
-          return ListTile(
-            title: Text(
-              item['title'] as String,
-              style: TextStyle(
-                color: index == _selectedIndex ? Colors.orange : Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+    return ListTile(
+      title: TextButton(
+        onPressed: onPressed, // 직접 onPressed 콜백 사용
+        style: TextButton.styleFrom(
+          alignment: Alignment.centerLeft,
+          minimumSize: const Size(0, 0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          backgroundColor: isCurrentPage
+              ? Colors.orange.withOpacity(0.1)
+              : Colors.transparent,
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: MediaQuery.of(context).size.height * 0.035,
+            fontWeight: FontWeight.bold,
+            color: isCurrentPage ? Colors.orange : Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget drawerContents(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 30, 30, 0),
+              child: IconButton(
+                onPressed: () {
+                  Get.back();
+                },
+                icon: Icon(
+                  Icons.close_outlined,
+                  size: MediaQuery.of(context).size.height * 0.04, // 아이콘 크기 조정
+                  weight: 100,
+                  color: Colors.black,
+                ),
               ),
             ),
-            onTap: () {
-              setState(() {
-                _selectedIndex = item['index'] as int;
-              });
-              if (ResponsiveBreakpoints.of(context).isMobile ||
-                  ResponsiveBreakpoints.of(context).isTablet) {
-                Navigator.pop(context);
-              }
-            },
-          );
-        },
-      ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(35, 60, 35, 20), // 패딩 조정
+          child: Divider(
+            color: Colors.black,
+            thickness: MediaQuery.of(context).size.height * 0.002,
+          ),
+        ),
+        _buildDrawerItem(
+          context,
+          "REBALANCE AI",
+          () => Get.to(() => const RebalanceAi()),
+          Colors.black,
+        ),
+        _buildDrawerItem(
+          context,
+          "DATA INSIGHTS",
+          () => Get.to(() => const DataInsight()),
+          Colors.black,
+        ),
+        _buildDrawerItem(
+          context,
+          "COMPANY INTRO",
+          () => Get.to(() => const CompanyIntro()),
+          Colors.orange, // 기본 색상을 주황색으로 설정
+        ),
+        _buildDrawerItem(
+          context,
+          "LOGOUT",
+          () {
+            // 로그아웃 기능 추가
+          },
+          Colors.black,
+        ),
+      ],
     );
   }
 
   Widget _buildContent() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildMainContent();
-      case 1:
-        return _buildDataInsights();
-      case 2:
-        return _buildLogout();
-      default:
-        return _buildMainContent();
-    }
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeroSection(),
+          _buildInfoSection(),
+        ],
+      ),
+    );
   }
 
-  Widget _buildMainContent() {
-    return Stack(
-      children: [
-        // 배경 이미지
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: const AssetImage('assets/background.jpg'),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.3),
-                BlendMode.darken,
+  Widget _buildHeroSection() {
+    return Container(
+      height: 600,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: const AssetImage('images/ddareungi.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.black.withOpacity(0.3),
+            BlendMode.darken,
+          ),
+        ),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CycleSync',
+            style: TextStyle(
+              fontSize: 64,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 2,
+            ),
+          ),
+          SizedBox(height: 20),
+          SizedBox(
+            width: 500,
+            child: Text(
+              '혁신적인 AI 기술로 더 나은 미래를 만들어갑니다',
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.white,
+                height: 1.5,
               ),
             ),
           ),
-        ),
-        SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeroSection(),
-              _buildInfoSection(),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
-Widget _buildHeroSection() {
-  return Container(
-    height: 600,
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 40),
-    decoration: BoxDecoration(
-      image: DecorationImage(
-        image: const AssetImage(
-          'images/ddareungi.png',
-          ),
-        fit: BoxFit.cover,
-        alignment: const Alignment(0, 0.3),
-        colorFilter: ColorFilter.mode(
-          Colors.black.withOpacity(0.3),
-          BlendMode.darken,
-        ),
-      ),
-    ),
-    child: const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'CycleSync',
-          style: TextStyle(
-            fontSize: 64,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: 2,
-          ),
-        ),
-        SizedBox(height: 20),
-        SizedBox(
-          width: 500,
-          child: Text(
-            '혁신적인 AI 기술로 더 나은 미래를 만들어갑니다',
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              height: 1.5,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
   Widget _buildInfoSection() {
     return Container(
@@ -198,30 +215,34 @@ Widget _buildHeroSection() {
   }
 
   Widget _buildInfoGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 3,
-      mainAxisSpacing: 20,
-      crossAxisSpacing: 20,
-      childAspectRatio: 1.2,
-      children: [
-        _buildInfoCard(
-          icon: Icons.psychology,
-          title: 'AI Technology',
-          description: '최첨단 AI 기술 개발',
-        ),
-        _buildInfoCard(
-          icon: Icons.analytics,
-          title: 'Data Analysis',
-          description: '정확한 데이터 분석',
-        ),
-        _buildInfoCard(
-          icon: Icons.trending_up,
-          title: 'Innovation',
-          description: '지속적인 혁신과 성장',
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: constraints.maxWidth > 800 ? 3 : 1,
+          mainAxisSpacing: 20,
+          crossAxisSpacing: 20,
+          childAspectRatio: 1.2,
+          children: [
+            _buildInfoCard(
+              icon: Icons.psychology,
+              title: 'AI Technology',
+              description: '최첨단 AI 기술 개발',
+            ),
+            _buildInfoCard(
+              icon: Icons.analytics,
+              title: 'Data Analysis',
+              description: '정확한 데이터 분석',
+            ),
+            _buildInfoCard(
+              icon: Icons.trending_up,
+              title: 'Innovation',
+              description: '지속적인 혁신과 성장',
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -268,14 +289,5 @@ Widget _buildHeroSection() {
         ],
       ),
     );
-  }
-
-  Widget _buildDataInsights() {
-    return const Center(child: Text('Data Insights Page'));
-  }
-
-
-  Widget _buildLogout() {
-    return const Center(child: Text('Logout Page'));
   }
 }

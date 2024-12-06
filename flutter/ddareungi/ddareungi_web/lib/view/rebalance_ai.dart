@@ -272,7 +272,7 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            Get.off(() => const Companyintro(), transition: Transition.noTransition);
+            Get.off(() => const CompanyIntro(), transition: Transition.noTransition);
           },
           style: TextButton.styleFrom(
             alignment: Alignment.centerLeft,
