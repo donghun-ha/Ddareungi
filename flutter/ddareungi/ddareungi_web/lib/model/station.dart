@@ -7,9 +7,9 @@ class Station {
 
   factory Station.fromJson(Map<String, dynamic> json) {
     return Station(
-        lat: json['lat'],
-        lng: json['lng'],
-        name: json['station_name'] // 예를 들어 JSON에 'station_name' 필드가 있다고 가정
-        );
+      lat: json['lat'],
+      lng: json['lng'],
+      name: json['stationName'],
+    );
   }
 }

@@ -18,12 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isMobile = ResponsiveBreakpoints.of(context).isMobile;
     final bool isTablet = ResponsiveBreakpoints.of(context).isTablet;
-
-    final double initialZoom = isMobile
-        ? 10.0
-        : isTablet
-            ? 10.5
-            : 11.0;
+    final bool isDesktop = ResponsiveBreakpoints.of(context).isDesktop;
 
     return Scaffold(
       appBar: (isMobile || isTablet)
@@ -34,103 +29,95 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           : null,
       drawer: (isMobile || isTablet) ? _buildDrawer(colorScheme) : null,
-      body: Row(
-        children: [
-          if (!isMobile && !isTablet)
-            _buildSidebar(colorScheme), // 모바일/태블릿이 아닌 경우 항상 사이드바 표시
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colorScheme.outline),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: const LatLng(37.514575, 127.106597),
-                    initialZoom: initialZoom,
-                    minZoom: 9,
-                    maxZoom: 18,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                      userAgentPackageName: 'com.ddareungi.web',
+      body: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: colorScheme.outline, width: 1),
+        ),
+        child: ResponsiveRowColumn(
+          layout: isDesktop
+              ? ResponsiveRowColumnType.ROW
+              : ResponsiveRowColumnType.COLUMN,
+          children: [
+            if (isDesktop)
+              ResponsiveRowColumnItem(
+                rowFlex: 1,
+                child: Container(
+                  width: 250,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withOpacity(0.1),
+                    border: Border(
+                      right: BorderSide(color: colorScheme.outline, width: 1),
                     ),
-                  ],
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: _buildDesktopMenu(colorScheme),
                 ),
               ),
+            ResponsiveRowColumnItem(
+              rowFlex: isDesktop ? 4 : 1,
+              columnFlex: 1,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 16 : 8,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: colorScheme.outline.withOpacity(0.5),
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: FlutterMap(
+                            mapController: _mapController,
+                            options: MapOptions(
+                              onMapReady: () {
+                                _mapController.move(
+                                  const LatLng(37.514575, 127.106597),
+                                  isMobile
+                                      ? 10.0
+                                      : isTablet
+                                          ? 10.5
+                                          : 11.0,
+                                );
+                              },
+                              minZoom: 9,
+                              maxZoom: 18,
+                              keepAlive: true,
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate:
+                                    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                                userAgentPackageName: 'com.ddareungi.web',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(isDesktop ? 16 : 8),
+                        child: Text(
+                          '클릭하면 해당 구역으로 이동합니다.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isDesktop ? 16 : 14,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  _buildSidebar(ColorScheme colorScheme) {
-    final menuItems = [
-      {'icon': Icons.grid_view, 'title': 'Dashboard'},
-      {'icon': Icons.account_balance_wallet_outlined, 'title': 'Wallet'},
-      {'icon': Icons.message_outlined, 'title': 'Messages'},
-      {'icon': Icons.swap_horiz_outlined, 'title': 'Trade'},
-      {'icon': Icons.settings_outlined, 'title': 'Account Setting'},
-    ];
-
-    return Container(
-      width: 250,
-      color: colorScheme.primaryContainer.withOpacity(0.1),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: colorScheme.primary,
-                  radius: 30,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '송파구 관리자',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          Expanded(
-            child: ListView.builder(
-              itemCount: menuItems.length,
-              itemBuilder: (context, index) {
-                final item = menuItems[index];
-                return ListTile(
-                  leading: Icon(item['icon'] as IconData,
-                      color: colorScheme.primary),
-                  title: Text(
-                    item['title'] as String,
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  onTap: () {
-                    // 메뉴 클릭 시 동작 정의 가능
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -139,7 +126,70 @@ class _HomeScreenState extends State<HomeScreen> {
     return Drawer(
       child: Container(
         color: colorScheme.primaryContainer.withOpacity(0.1),
-        child: _buildSidebar(colorScheme),
+        child: _buildDesktopMenu(colorScheme),
+      ),
+    );
+  }
+
+  _buildDesktopMenu(ColorScheme colorScheme) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                backgroundColor: colorScheme.primary,
+                radius: 25,
+              ),
+              const SizedBox(width: 10),
+              CircleAvatar(
+                backgroundColor: colorScheme.onSurfaceVariant,
+                radius: 25,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            '송파구 관리자',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 40),
+          _buildMenuItem(Icons.grid_view, 'Dashboard', colorScheme.primary),
+          _buildMenuItem(Icons.account_balance_wallet_outlined, 'Wallet',
+              colorScheme.onSurfaceVariant),
+          _buildMenuItem(
+              Icons.message_outlined, 'Messages', colorScheme.onSurfaceVariant),
+          _buildMenuItem(
+              Icons.swap_horiz_outlined, 'Trade', colorScheme.onSurfaceVariant),
+          _buildMenuItem(Icons.settings_outlined, 'Account Setting',
+              colorScheme.onSurfaceVariant),
+        ],
+      ),
+    );
+  }
+
+  _buildMenuItem(IconData icon, String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              color: color,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

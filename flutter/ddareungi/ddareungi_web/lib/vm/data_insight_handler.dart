@@ -19,7 +19,22 @@ class DataInsightHandler extends GetxController {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        stationData.assignAll(data.cast<String, List<dynamic>>());
+
+        Map<String, List<dynamic>> typedData = {};
+        data.forEach((key, value) {
+          if (value is List) {
+            typedData[key] = value
+                .map((item) => {
+                      "time": item["time"],
+                      "rent": item["rent"],
+                      "restore": item["restore"],
+                      "fill_count": item["fill_count"],
+                    })
+                .toList();
+          }
+        });
+
+        stationData.assignAll(typedData);
       } else {
         errorMessage.value = "Failed to load data: ${response.statusCode}";
       }
