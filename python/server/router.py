@@ -19,13 +19,13 @@ app.include_router(jamsil_router, prefix="/jamsil", tags=["jamsil"])
 app.include_router(login_router, tags=["login"])
 app.include_router(data_insight_router, prefix="/data_insight", tags=["data_insight"])
 app.include_router(map_router, prefix="/map", tags=["map"])
+app.include_router(weather_router, prefix="/weather"),
+app.include_router(model_router, prefix="/model"),
 
 
 def connect():
     conn = pymysql.connect(
         host=hosts.ip, user="root", password="qwer1234", db="ttareunggo", charset="utf8"
-app.include_router(weather_router, prefix="/weather")
-app.include_router(model_router, prefix="/model")
     )
     return conn
 
