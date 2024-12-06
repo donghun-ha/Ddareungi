@@ -279,7 +279,7 @@ Widget drawerContents(BuildContext context) {
             minimumSize: const Size(0, 0),
           ),
           child: Text(
-            "PROFILE",
+            "COMPANY INTRO",
             style: TextStyle(
               fontSize: MediaQuery.of(context).size.height * 0.06,
               fontWeight: FontWeight.bold,
