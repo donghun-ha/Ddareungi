@@ -1,7 +1,10 @@
 import 'dart:convert';
-import 'package:ddareungi_web/utils/responsive_config.dart';
-import 'package:ddareungi_web/view/companyIntro.dart';
+import 'package:ddareungi_web/model/manage.dart';
+import 'package:ddareungi_web/model/responsive_config.dart';
+import 'package:ddareungi_web/model/station.dart';
 import 'package:ddareungi_web/view/data_insights.dart';
+import 'package:ddareungi_web/vm/manage_handler.dart';
+import 'package:ddareungi_web/vm/station_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:ddareungi_web/constants/color.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -20,110 +23,52 @@ class RebalanceAi extends StatefulWidget {
 class _RebalanceAiState extends State<RebalanceAi> {
   final ScrollController scrollController = ScrollController();
   final MapController mapController = MapController();
-  late String stations;
-
-  // Future 변수로 API 데이터를 캐싱
-  late Future<List<Marker>> futureMarkers;
-  int interactiveFlags = InteractiveFlag.none;
+  final StationController stationController = StationController();
+  late Future<List<Station>> futureStations;
+  Future<List<Manage>>? futureManageData;
   bool isHeaderVisible = false;
+
+  Station? selectedStation; // 스테이션 정보
 
   @override
   void initState() {
     super.initState();
-    // API 호출을 Future로 저장
-    futureMarkers = fetchStations();
+    futureStations = fetchStations();
     scrollController.addListener(() {
       setState(() {
-        // 두 번째 화면부터 헤더 표시
         isHeaderVisible =
             scrollController.offset > MediaQuery.of(context).size.height * 0.8;
       });
     });
   }
 
+  void onStationSelected(Station station) {
+    if (selectedStation?.name != station.name) {
+      setState(() {
+        selectedStation = station;
+        futureManageData =
+            ManageHandler().fetchManageDataByStationName(station.name);
+      });
+    }
+  }
+
   @override
   void dispose() {
     scrollController.dispose();
+    mapController.dispose();
     super.dispose();
   }
 
-  Future<List<Marker>> fetchStations() async {
+  Future<List<Station>> fetchStations() async {
     final url = Uri.parse('http://127.0.0.1:8000/map/stations');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body); // JSON 디코딩
-      return data.map<Marker>((station) {
-        return Marker(
-          point: LatLng(station['lat'], station['lng']),
-          width: 40,
-          height: 40,
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.red,
-            size: 30,
-          ),
-        );
-      }).toList();
+      final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+      return data.map<Station>((json) => Station.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load stations');
     }
-  }
-
-  Widget mapFuntion(BuildContext context, MapController mapController,
-      futureMarkers, interactiveFlags) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        debugPrint("오류 : $interactiveFlags");
-        setState(() {
-          interactiveFlags = InteractiveFlag.all;
-          debugPrint("오류 : $interactiveFlags");
-        });
-      },
-      child: FutureBuilder<List<Marker>>(
-        future: futureMarkers, // 캐싱된 Future 사용
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
-            final markers = snapshot.data!;
-            return Container(
-              width: MediaQuery.of(context).size.width * 0.8,
-              height: MediaQuery.of(context).size.height * 0.8,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: FlutterMap(
-                mapController: mapController,
-                options: MapOptions(
-                  initialCenter: const LatLng(37.517653, 127.105453),
-                  initialZoom: 15,
-                  minZoom: 9,
-                  maxZoom: 18,
-                  interactionOptions: InteractionOptions(
-                    flags: interactiveFlags,
-                  ),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    userAgentPackageName: 'com.ddareungi.web',
-                  ),
-                  MarkerLayer(markers: markers), // 마커 추가
-                ],
-              ),
-            );
-          } else {
-            return const Center(child: Text('No data available'));
-          }
-        },
-      ),
-    );
   }
 
   @override
@@ -151,12 +96,27 @@ class _RebalanceAiState extends State<RebalanceAi> {
                     firstScrollDrawer(context),
                   ],
                 ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                // stationName(context, stations),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                mapFuntion(
-                    context, mapController, futureMarkers, interactiveFlags),
-                SizedBox(height: MediaQuery.of(context).size.height * 1),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                myStation(context),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.05,
+                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: mapFuntion(context, mapController, futureStations),
+                ),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                hintText(context),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.08),
+                stationName(context, futureStations, mapController, (station) {
+                  setState(() {
+                    selectedStation = station;
+                  });
+                }),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                analysisResults(context, selectedStation, futureManageData),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.5),
                 footer(context),
               ],
             ),
@@ -170,30 +130,30 @@ class _RebalanceAiState extends State<RebalanceAi> {
       backgroundColor: backClr,
     );
   }
+}
 
-  // 고정 헤더
-  Widget _buildFixedHeader(BuildContext context) {
-    return Container(
-      height: 80,
-      color: Colors.transparent,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: () {
-              Get.to(() => const RebalanceAi(),
-                  transition: Transition.noTransition);
-            },
-            child: Image.asset(
-              "images/logo.png",
-              width: MediaQuery.of(context).size.width * 0.2,
-              fit: BoxFit.contain,
-            ),
+// 고정 헤더
+Widget _buildFixedHeader(BuildContext context) {
+  return Container(
+    height: 80,
+    color: Colors.transparent,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () {
+            Get.to(() => const RebalanceAi(),
+                transition: Transition.noTransition);
+          },
+          child: Image.asset(
+            "images/logo.png",
+            width: MediaQuery.of(context).size.width * 0.2,
+            fit: BoxFit.contain,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }
 
 // Drawer Widget
@@ -272,14 +232,14 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            Get.off(() => const Companyintro(), transition: Transition.noTransition);
+            // 다른 기능 추가 가능
           },
           style: TextButton.styleFrom(
             alignment: Alignment.centerLeft,
             minimumSize: const Size(0, 0),
           ),
           child: Text(
-            "COMPANY INTRO",
+            "PROFILE",
             style: TextStyle(
               fontSize: MediaQuery.of(context).size.height * 0.06,
               fontWeight: FontWeight.bold,
@@ -423,27 +383,320 @@ Widget firstScrollDrawer(BuildContext context) {
   );
 }
 
+// Text Widget
+Widget myStation(BuildContext context) {
+  return Padding(
+    padding:
+        EdgeInsets.fromLTRB(0, 0, MediaQuery.of(context).size.width * 0.54, 0),
+    child: Text(
+      "My Management Area",
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: MediaQuery.of(context).size.height * 0.05,
+      ),
+    ),
+  );
+}
+
 // 스테이션 클릭
-// Widget stationName(BuildContext context, stations) {
-//   final heightSize = MediaQuery.of(context).size.height * 0.05;
-//   final widthSize = MediaQuery.of(context).size.width * 0.05;
-//   return Row(
-//     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//     children: [
-//       Container(
-//         width: widthSize,
-//         height: heightSize,
-//         decoration: BoxDecoration(
-//           shape: BoxShape.circle,
-//         ),
-//         alignment: Alignment.center,
-//         child: Text(
-//           "",
-//         ),
-//       )
-//     ],
-//   );
-// }
+Widget stationName(BuildContext context, Future<List<Station>> futureStations,
+    MapController mapController, Function(Station) onStationSelected) {
+  return FutureBuilder<List<Station>>(
+    future: futureStations,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const CircularProgressIndicator();
+      } else if (snapshot.hasError) {
+        return Text('Error: ${snapshot.error}');
+      } else if (snapshot.hasData) {
+        final stations = snapshot.data!;
+        final displayedStations = stations.take(3).toList();
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: displayedStations.map((station) {
+            return GestureDetector(
+              onTap: () {
+                mapController.move(LatLng(station.lat, station.lng), 15.0);
+                onStationSelected(station); // 부모 상태 업데이트 콜백 호출
+              },
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.1,
+                height: MediaQuery.of(context).size.height * 0.1,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDFFFE1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFB0E0E6),
+                    width: 2,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  station.name,
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.height * 0.03,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      } else {
+        return const Text('No stations available');
+      }
+    },
+  );
+}
+
+// flutter Map
+Widget mapFuntion(BuildContext context, MapController mapController,
+    Future<List<Station>> futureStations) {
+  return FutureBuilder<List<Station>>(
+    future: futureStations,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (snapshot.hasData) {
+        final stations = snapshot.data!;
+        int colorIndex = 0; // 초기값 설정
+        final markers = stations.map((station) {
+          // 마커 색상 배열 정의
+          final List<Color> markerColors = [
+            Colors.green,
+            Colors.blue,
+            Colors.red
+          ];
+          colorIndex = (colorIndex + 1) % markerColors.length; // 0, 1, 2 반복
+          return Marker(
+            point: LatLng(station.lat, station.lng),
+            width: 80, // 넓이를 더 크게 설정
+            height: 80, // 높이를 더 크게 설정
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8), // 투명 배경
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    station.name,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Icon(
+                  Icons.location_on,
+                  color: markerColors[colorIndex],
+                  size: 40,
+                ),
+              ],
+            ),
+          );
+        }).toList();
+
+        return FlutterMap(
+          mapController: mapController,
+          options: const MapOptions(
+            initialCenter: LatLng(37.517653, 127.105453),
+            initialZoom: 15,
+            minZoom: 9,
+            maxZoom: 18,
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+              userAgentPackageName: 'com.ddareungi.web',
+            ),
+            MarkerLayer(markers: markers),
+          ],
+        );
+      } else {
+        return const Center(child: Text('No data available'));
+      }
+    },
+  );
+}
+
+Widget hintText(BuildContext context) {
+  return Text(
+    "The map moves when the button below is clicked.",
+    style: TextStyle(
+      fontWeight: FontWeight.w500,
+      fontSize: MediaQuery.of(context).size.height * 0.02,
+      color: logintxtClr,
+    ),
+  );
+}
+
+String convertStandardTime(String standardTime) {
+  if (standardTime.length != 6) return standardTime; // 기본적으로 길이 체크
+
+  String month = standardTime.substring(0, 2);
+  String day = standardTime.substring(2, 4);
+  String hour = standardTime.substring(4, 6);
+
+  return '$month월 $day일 $hour시';
+}
+
+Widget analysisResults(
+    BuildContext context, Station? selectedStation, cachedManageData) {
+  final manageHandler = ManageHandler();
+
+  if (selectedStation == null) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+              0, 0, MediaQuery.of(context).size.width * 0.6, 0),
+          child: Text(
+            "Station Analytics",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: MediaQuery.of(context).size.height * 0.04,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+        Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            "Click a station to see the details.",
+            style: TextStyle(
+              fontSize: MediaQuery.of(context).size.height * 0.025,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 캐싱된 데이터를 사용
+  if (cachedManageData == null || selectedStation.name != cachedManageData) {
+    cachedManageData ??=
+        manageHandler.fetchManageDataByStationName(selectedStation.name);
+  }
+
+  return FutureBuilder<List<Manage>>(
+    future: cachedManageData,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Text("Error: ${snapshot.error}");
+      } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+        final manageData = snapshot.data!;
+        final rebalancingTimes = manageData
+            .where((data) => data.fillCount > 0)
+            .map((data) => convertStandardTime(data.standardTime.toString()))
+            .toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  0, 0, MediaQuery.of(context).size.width * 0.6, 0),
+              child: Text(
+                "Station Analytics - ${selectedStation.name}",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: MediaQuery.of(context).size.height * 0.04,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+              padding: const EdgeInsets.all(24.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Rebalancing Required Times",
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.height * 0.025,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (rebalancingTimes.isEmpty)
+                    Text(
+                      "향후 24시간 동안 재배치가 필요하지 않습니다.",
+                      style: TextStyle(
+                        fontSize: MediaQuery.of(context).size.height * 0.02,
+                        color: Colors.black54,
+                      ),
+                    )
+                  else
+                    Column(
+                      children: rebalancingTimes.map((time) {
+                        return Text(
+                          "Time: $time",
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.height * 0.02,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+      } else {
+        return const Center(
+          child: Text("향후 24시간 동안 재배치가 필요하지 않습니다."),
+        );
+      }
+    },
+  );
+}
 
 // Footer
 Widget footer(BuildContext context) {
