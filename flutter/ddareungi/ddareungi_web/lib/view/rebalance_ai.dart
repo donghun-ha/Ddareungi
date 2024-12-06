@@ -1,4 +1,5 @@
-import 'package:ddareungi_web/utils/responsive_config.dart';
+import 'dart:convert';
+import 'package:ddareungi_web/model/responsive_config.dart';
 import 'package:ddareungi_web/view/data_insights.dart';
 import 'package:ddareungi_web/view/profile.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:ddareungi_web/constants/color.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
 import 'package:responsive_framework/responsive_framework.dart';
 
 class RebalanceAi extends StatefulWidget {
@@ -18,11 +20,18 @@ class RebalanceAi extends StatefulWidget {
 class _RebalanceAiState extends State<RebalanceAi> {
   final ScrollController scrollController = ScrollController();
   final MapController mapController = MapController();
+  late String stations;
+
+  // Future 변수로 API 데이터를 캐싱
+  late Future<List<Marker>> futureMarkers;
+  int interactiveFlags = InteractiveFlag.none;
   bool isHeaderVisible = false;
 
   @override
   void initState() {
     super.initState();
+    // API 호출을 Future로 저장
+    futureMarkers = fetchStations();
     scrollController.addListener(() {
       setState(() {
         // 두 번째 화면부터 헤더 표시
@@ -33,15 +42,92 @@ class _RebalanceAiState extends State<RebalanceAi> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final bool isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    final bool isTablet = ResponsiveBreakpoints.of(context).isTablet;
-    final double initialZoom = isMobile
-        ? 10.0
-        : isTablet
-            ? 10.5
-            : 11.0;
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
 
+  Future<List<Marker>> fetchStations() async {
+    final url = Uri.parse('http://127.0.0.1:8000/map/stations');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body); // JSON 디코딩
+      return data.map<Marker>((station) {
+        return Marker(
+          point: LatLng(station['lat'], station['lng']),
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.location_on,
+            color: Colors.red,
+            size: 30,
+          ),
+        );
+      }).toList();
+    } else {
+      throw Exception('Failed to load stations');
+    }
+  }
+
+  Widget mapFuntion(BuildContext context, MapController mapController,
+      futureMarkers, interactiveFlags) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        debugPrint("오류 : $interactiveFlags");
+        setState(() {
+          interactiveFlags = InteractiveFlag.all;
+          debugPrint("오류 : $interactiveFlags");
+        });
+      },
+      child: FutureBuilder<List<Marker>>(
+        future: futureMarkers, // 캐싱된 Future 사용
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (snapshot.hasData) {
+            final markers = snapshot.data!;
+            return Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: MediaQuery.of(context).size.height * 0.8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: FlutterMap(
+                mapController: mapController,
+                options: MapOptions(
+                  initialCenter: const LatLng(37.517653, 127.105453),
+                  initialZoom: 15,
+                  minZoom: 9,
+                  maxZoom: 18,
+                  interactionOptions: InteractionOptions(
+                    flags: interactiveFlags,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    userAgentPackageName: 'com.ddareungi.web',
+                  ),
+                  MarkerLayer(markers: markers), // 마커 추가
+                ],
+              ),
+            );
+          } else {
+            return const Center(child: Text('No data available'));
+          }
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       endDrawer: Drawer(
         width: MediaQuery.of(context).size.width * 0.5,
@@ -65,9 +151,12 @@ class _RebalanceAiState extends State<RebalanceAi> {
                     firstScrollDrawer(context),
                   ],
                 ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.5),
-                mapFuntion(context, mapController, initialZoom),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.5),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                // stationName(context, stations),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                mapFuntion(
+                    context, mapController, futureMarkers, interactiveFlags),
+                SizedBox(height: MediaQuery.of(context).size.height * 1),
                 footer(context),
               ],
             ),
@@ -82,36 +171,26 @@ class _RebalanceAiState extends State<RebalanceAi> {
     );
   }
 
-  @override
-  void dispose() {
-    scrollController.dispose();
-    super.dispose();
-  }
-
   // 고정 헤더
   Widget _buildFixedHeader(BuildContext context) {
-    return AnimatedOpacity(
-      opacity: isHeaderVisible ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 500),
-      child: Container(
-        height: 80,
-        color: Colors.transparent,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Get.to(() => const RebalanceAi(),
-                    transition: Transition.noTransition);
-              },
-              child: Image.asset(
-                "images/logo.png",
-                width: MediaQuery.of(context).size.width * 0.2,
-                fit: BoxFit.contain,
-              ),
+    return Container(
+      height: 80,
+      color: Colors.transparent,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              Get.to(() => const RebalanceAi(),
+                  transition: Transition.noTransition);
+            },
+            child: Image.asset(
+              "images/logo.png",
+              width: MediaQuery.of(context).size.width * 0.2,
+              fit: BoxFit.contain,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -344,33 +423,27 @@ Widget firstScrollDrawer(BuildContext context) {
   );
 }
 
-// 지도 화면
-Widget mapFuntion(
-    BuildContext context, MapController mapController, double initialZoom) {
-  return Container(
-    width: MediaQuery.of(context).size.width * 0.8,
-    height: MediaQuery.of(context).size.height * 0.8,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: FlutterMap(
-      mapController: mapController,
-      options: MapOptions(
-        initialCenter: const LatLng(37.514575, 127.106597),
-        initialZoom: initialZoom,
-        minZoom: 9,
-        maxZoom: 18,
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          userAgentPackageName: 'com.ddareungi.web',
-        )
-      ],
-    ),
-  );
-}
+// 스테이션 클릭
+// Widget stationName(BuildContext context, stations) {
+//   final heightSize = MediaQuery.of(context).size.height * 0.05;
+//   final widthSize = MediaQuery.of(context).size.width * 0.05;
+//   return Row(
+//     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//     children: [
+//       Container(
+//         width: widthSize,
+//         height: heightSize,
+//         decoration: BoxDecoration(
+//           shape: BoxShape.circle,
+//         ),
+//         alignment: Alignment.center,
+//         child: Text(
+//           "",
+//         ),
+//       )
+//     ],
+//   );
+// }
 
 // Footer
 Widget footer(BuildContext context) {
