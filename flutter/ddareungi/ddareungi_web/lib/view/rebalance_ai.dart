@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:ddareungi_web/model/manage.dart';
-import 'package:ddareungi_web/model/responsive_config.dart';
 import 'package:ddareungi_web/model/station.dart';
+import 'package:ddareungi_web/utils/responsive_config.dart';
 import 'package:ddareungi_web/view/data_insights.dart';
 import 'package:ddareungi_web/vm/manage_handler.dart';
 import 'package:ddareungi_web/vm/station_controller.dart';
