@@ -2,6 +2,8 @@ from fastapi import FastAPI
 import pymysql
 import hosts
 from fastapi.middleware.cors import CORSMiddleware
+from model import router as model_router
+from weather_API import router as weather_router
 from songpa_office import router as songpa_router
 from jamsil.jamsil import router as jamsil_router
 from data_insight import router as data_insight_router
@@ -22,6 +24,8 @@ app.include_router(map_router, prefix="/map", tags=["map"])
 def connect():
     conn = pymysql.connect(
         host=hosts.ip, user="root", password="qwer1234", db="ttareunggo", charset="utf8"
+app.include_router(weather_router, prefix="/weather")
+app.include_router(model_router, prefix="/model")
     )
     return conn
 
@@ -35,7 +39,11 @@ app.add_middleware(
     allow_headers=["*"],  # 모든 헤더 사용
 )
 
+
+
+
+
 if __name__ == "__main__":
     import uvicorn
+    uvicorn.run(app, host='127.0.0.1', port=8000, reload=True)
 
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
