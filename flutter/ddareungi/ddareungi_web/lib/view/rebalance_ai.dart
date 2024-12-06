@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:ddareungi_web/model/responsive_config.dart';
+import 'package:ddareungi_web/utils/responsive_config.dart';
 import 'package:ddareungi_web/view/data_insights.dart';
 import 'package:ddareungi_web/view/profile.dart';
 import 'package:flutter/material.dart';
