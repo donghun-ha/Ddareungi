@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:ddareungi_web/utils/responsive_config.dart';
+import 'package:ddareungi_web/view/companyIntro.dart';
 import 'package:ddareungi_web/view/data_insights.dart';
-import 'package:ddareungi_web/view/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:ddareungi_web/constants/color.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -272,7 +272,7 @@ Widget drawerContents(BuildContext context) {
       ListTile(
         title: TextButton(
           onPressed: () {
-            Get.off(() => const Profile(), transition: Transition.noTransition);
+            Get.off(() => const Companyintro(), transition: Transition.noTransition);
           },
           style: TextButton.styleFrom(
             alignment: Alignment.centerLeft,
