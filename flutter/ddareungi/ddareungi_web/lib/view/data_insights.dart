@@ -14,7 +14,6 @@ class DataInsight extends StatefulWidget {
 class _DataInsightState extends State<DataInsight> {
   final ScrollController scrollController = ScrollController();
   bool isHeaderVisible = false;
-
   final DataInsightHandler controller = Get.put(DataInsightHandler());
 
   @override
@@ -85,37 +84,33 @@ class _DataInsightState extends State<DataInsight> {
     );
   }
 
-  @override
-  void dispose() {
-    scrollController.dispose();
-    super.dispose();
-  }
-
   Widget _buildStationCharts(Map<String, List<dynamic>> stationData) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Column(
         children: stationData.entries.map((entry) {
           final stationCode = entry.key;
           final predictions = entry.value;
 
-          return Column(
-            children: [
-              // CR_COUNT 차트
-              _buildStationChart(
-                title: "CR Count for $stationCode",
-                data: predictions,
-                valueKey: "cr_count",
-              ),
-              const SizedBox(height: 20),
-              // FILL_COUNT 차트
-              _buildStationChart(
-                title: "Fill Count for $stationCode",
-                data: predictions,
-                valueKey: "fill_count",
-              ),
-              const SizedBox(height: 40),
-            ],
+          return Container(
+            margin: const EdgeInsets.only(bottom: 40),
+            child: Column(
+              children: [
+                _buildStationChart(
+                  title: "$stationCode 대여/반납 예측",
+                  data: predictions,
+                  valueKey: "cr_count",
+                  color: Colors.blue,
+                ),
+                const SizedBox(height: 20),
+                _buildStationChart(
+                  title: "$stationCode 재배치 필요량",
+                  data: predictions,
+                  valueKey: "fill_count",
+                  color: Colors.green,
+                ),
+              ],
+            ),
           );
         }).toList(),
       ),
@@ -126,59 +121,124 @@ class _DataInsightState extends State<DataInsight> {
     required String title,
     required List<dynamic> data,
     required String valueKey,
+    required Color color,
   }) {
     return Card(
-      elevation: 5,
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 24),
             SizedBox(
               height: 300,
               child: LineChart(
                 LineChartData(
-                  titlesData: FlTitlesData(
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false), // 상단 숫자 제거
+                  minX: 0,
+                  maxX: (data.length - 1).toDouble(),
+                  minY: _getMinY(data, valueKey),
+                  maxY: _getMaxY(data, valueKey),
+                  clipData: const FlClipData.all(),
+                  backgroundColor: Colors.white,
+                  gridData: FlGridData(
+                    show: true,
+                    drawHorizontalLine: true,
+                    horizontalInterval: 20,
+                    drawVerticalLine: true,
+                    verticalInterval: 2,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: Colors.grey.shade200,
+                      strokeWidth: 1,
                     ),
+                    getDrawingVerticalLine: (value) => FlLine(
+                      color: Colors.grey.shade200,
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
+                        reservedSize: 30,
+                        interval: 2,
                         getTitlesWidget: (value, meta) {
-                          if (value.toInt() >= data.length) {
+                          if (value.toInt() >= data.length)
                             return const Text('');
-                          }
                           return Text(
                             data[value.toInt()]["time"],
-                            style: const TextStyle(fontSize: 10),
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
                           );
                         },
                       ),
                     ),
-                    leftTitles: const AxisTitles(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        interval: 20,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            value.toInt().toString(),
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
-                  borderData: FlBorderData(show: false),
-                  gridData: const FlGridData(show: true),
+                  borderData: FlBorderData(
+                    show: true,
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
                   lineBarsData: [
                     LineChartBarData(
                       spots: data.asMap().entries.map((entry) {
-                        final index = entry.key.toDouble();
-                        final value = entry.value[valueKey].toDouble();
-                        return FlSpot(index, value);
+                        return FlSpot(
+                          entry.key.toDouble(),
+                          entry.value[valueKey].toDouble(),
+                        );
                       }).toList(),
                       isCurved: true,
-                      barWidth: 4,
-                      belowBarData: BarAreaData(show: false),
-                      color: Colors.blue,
+                      barWidth: 2,
+                      color: color,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                          radius: 2,
+                          color: Colors.white,
+                          strokeWidth: 1.5,
+                          strokeColor: color,
+                        ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: color.withOpacity(0.1),
+                      ),
                     ),
                   ],
                 ),
@@ -190,24 +250,44 @@ class _DataInsightState extends State<DataInsight> {
     );
   }
 
+  double _getMinY(List<dynamic> data, String valueKey) {
+    double min = double.infinity;
+    for (var item in data) {
+      if (item[valueKey].toDouble() < min) {
+        min = item[valueKey].toDouble();
+      }
+    }
+    return (min - 10).floorToDouble();
+  }
+
+  double _getMaxY(List<dynamic> data, String valueKey) {
+    double max = double.negativeInfinity;
+    for (var item in data) {
+      if (item[valueKey].toDouble() > max) {
+        max = item[valueKey].toDouble();
+      }
+    }
+    return (max + 10).ceilToDouble();
+  }
+
   Widget _buildFixedHeader(BuildContext context) {
     return AnimatedOpacity(
       opacity: isHeaderVisible ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 300),
       child: Container(
         height: 80,
-        color: Colors.transparent,
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             GestureDetector(
-              onTap: () {
-                Get.to(() => const RebalanceAi(),
-                    transition: Transition.noTransition);
-              },
+              onTap: () => Get.to(
+                () => const RebalanceAi(),
+                transition: Transition.noTransition,
+              ),
               child: Image.asset(
                 "images/logo.png",
-                width: MediaQuery.of(context).size.width * 0.2,
+                height: 60,
                 fit: BoxFit.contain,
               ),
             ),
@@ -216,17 +296,23 @@ class _DataInsightState extends State<DataInsight> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
 }
 
 Widget footer(BuildContext context) {
-  return Column(
-    children: [
-      Text(
-        "© Copyright 2024 CycleSync",
-        style: TextStyle(
-          fontSize: MediaQuery.of(context).size.height * 0.02,
-        ),
-      )
-    ],
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 24),
+    child: Text(
+      "© Copyright 2024 CycleSync",
+      style: TextStyle(
+        fontSize: 14,
+        color: Colors.grey.shade600,
+      ),
+    ),
   );
 }
