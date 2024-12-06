@@ -15,12 +15,12 @@ app = FastAPI()
 
 
 app.include_router(songpa_router, prefix="/songpa", tags=["model"])
-app.include_router(jamsil_router, prefix="/jamsil", tags=["jamsil"])
+app.include_router(jamsil_router, prefix="/jamsil", tags=["model"])
 app.include_router(login_router, tags=["login"])
 app.include_router(data_insight_router, prefix="/data_insight", tags=["data_insight"])
 app.include_router(map_router, prefix="/map", tags=["map"])
-app.include_router(weather_router, prefix="/weather"),
-app.include_router(model_router, prefix="/model"),
+app.include_router(weather_router, prefix="/weather", tags=['weather']),
+app.include_router(model_router, prefix="/model", tags=['model']),
 
 
 def connect():
