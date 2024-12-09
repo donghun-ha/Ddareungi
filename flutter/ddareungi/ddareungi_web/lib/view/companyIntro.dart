@@ -60,7 +60,7 @@ class CompanyIntro extends StatelessWidget {
           minimumSize: const Size(0, 0),
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           backgroundColor: isCurrentPage
-              ? Colors.orange.withOpacity(0.1)
+              ? Colors.white.withOpacity(0.1)
               : Colors.transparent,
         ),
         child: Text(
@@ -79,31 +79,18 @@ class CompanyIntro extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 30, 30, 0),
-              child: IconButton(
-                onPressed: () {
-                  Get.back();
-                },
-                icon: Icon(
-                  Icons.close_outlined,
-                  size: MediaQuery.of(context).size.height * 0.04, // 아이콘 크기 조정
-                  weight: 100,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ],
-        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(35, 60, 35, 20), // 패딩 조정
+          padding: const EdgeInsets.fromLTRB(35, 60, 35, 20),
           child: Divider(
             color: Colors.black,
             thickness: MediaQuery.of(context).size.height * 0.002,
           ),
+        ),
+        _buildDrawerItem(
+          context,
+          "COMPANY INTRO",
+          () => Get.to(() => const CompanyIntro()),
+          Colors.orange,
         ),
         _buildDrawerItem(
           context,
@@ -116,12 +103,6 @@ class CompanyIntro extends StatelessWidget {
           "DATA INSIGHTS",
           () => Get.to(() => const DataInsight()),
           Colors.black,
-        ),
-        _buildDrawerItem(
-          context,
-          "COMPANY INTRO",
-          () => Get.to(() => const CompanyIntro()),
-          Colors.orange, // 기본 색상을 주황색으로 설정
         ),
         _buildDrawerItem(
           context,
